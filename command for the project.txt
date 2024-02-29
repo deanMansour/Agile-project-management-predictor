@@ -1,3 +1,5 @@
+IN VSCode download these extentions : pyhon, python debugger, pylance, django,
+(python eniroment could be usable)
 ------------------INSTALLATION of DJANGO-------------------------
 python -m pip install Django
 OR/python3 -m pip install Django
