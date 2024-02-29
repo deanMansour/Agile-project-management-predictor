@@ -1,0 +1,13 @@
+------------------INSTALLATION of DJANGO-------------------------
+python -m pip install Django
+OR/python3 -m pip install Django
+---to check if istalled---
+django-admin
+------------------creating djano project-------------------------
+django-admin startproject AgileProject_ManagementPredictor
+------------------RUNNING commands---------------------
+py manage.py runserver
+cntl+c ---> to stop running surver
+http://127.0.0.1:8000
+------------------CREATING APP FOLDER---------------------
+py manage.py startapp Predicting_app
