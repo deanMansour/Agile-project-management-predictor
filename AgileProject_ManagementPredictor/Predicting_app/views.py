@@ -6,4 +6,4 @@ from django.urls import reverse
 # Create your views here.
 
 def home(request):
-    return HttpResponse("HOME PAGE")
+    return render(request, 'Predicting_app/home_page.html')
