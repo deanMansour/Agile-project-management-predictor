@@ -1,11 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
-</head>
-<body>
-    <!-- Your HTML content here -->
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    inherted from base.html
+{% endblock %}
+
+{% block content %}
+    <header>            
+        <h1><a href="">view data</a></h1>
+        <h1><a href="">add data</a></h1>
+        <h1><a href="">delete data</a></h1>
+    </header>
+    <h1>  some historic data used to measure project predicting </h1>
+{% endblock %}
