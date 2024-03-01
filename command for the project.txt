@@ -7,9 +7,13 @@ OR/python3 -m pip install Django
 django-admin
 ------------------creating djano project-------------------------
 django-admin startproject AgileProject_ManagementPredictor
+------------------CREATING APP FOLDER---------------------
+py manage.py startapp Predicting_app
 ------------------RUNNING commands---------------------
 py manage.py runserver
 cntl+c ---> to stop running surver
 http://127.0.0.1:8000
-------------------CREATING APP FOLDER---------------------
-py manage.py startapp Predicting_app
+------------------changes i may implement to the code paths in settings.py for-------------------
+48. Adding Global Static Files
+42. Template Inheritance
+49. Adding CSS Styling
