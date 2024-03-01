@@ -1,14 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
-</head>
-<body>
+{% block title %}
+    inherted from base.html
+{% endblock %}
+
+{% block content %}
     <section>
         <header>
             <img src="{% static "Predicting_app/images/agile_methodology_cyrcle.jpg"%}" alt="AGILE Project Management Pridictor"  />
@@ -21,6 +18,4 @@
               and enhance project outcomes.
         </p>
     </section>
-
-</body>
-</html>
+{% endblock %}
