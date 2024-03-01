@@ -1,17 +1,18 @@
 IN VSCode download these extentions : pyhon, python debugger, pylance, django,
 (python enviroment could be usable)
-------------------INSTALLATION of DJANGO-------------------------
+------------------INSTALLATION of DJANGO---------------------------
 python -m pip install Django
 OR/python3 -m pip install Django
 ---to check if istalled---
 django-admin
-------------------creating djano project-------------------------
+------------------creating djano project--------------------------
 django-admin startproject AgileProject_ManagementPredictor
-------------------CREATING APP FOLDER---------------------
+------------------CREATING APP FOLDER-----------------------------
 py manage.py startapp Predicting_app
-------------------RUNNING commands---------------------
+------------------RUNNING commands--------------------------------
 py manage.py runserver
 cntl+c ---> to stop running surver
+---home page---
 http://127.0.0.1:8000
 ------------------changes i may implement to the code paths in settings.py for-------------------
 48. Adding Global Static Files
