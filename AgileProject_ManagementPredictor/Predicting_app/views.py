@@ -25,24 +25,40 @@ class loging_pageview(request):
 class admin_MainPage_view(request):
     def get(self, request):
         return render(request, 'Predicting_app/admin_OR_user_MainPage.html')
+    #----------------------
     def post(self, request):
+        return None
+    #----------------------
+    def admin_view_data():
+        return None
+    #----------------------
+    def admin_add_data():
+        return None
+    #----------------------
+    def admin_delete_data():
         return None
 #--------------------------------------------------------------------------------
 class user_MainPage_view(request):
     def get(self, request):
         return render(request, 'Predicting_app/admin_OR_user_MainPage.html')
+    #----------------------
     def post(self, request):
+        return None
+    #----------------------
+    def user_view_data():
         return None
 #================================================================================
 #================================================================================
 class admin_measurement_pageview(request):
     def get(self, request):
         return render(request, 'Predicting_app/admin_OR_user_measurementPage.html')
+    #----------------------
     def post(self, request):
         return None
 #--------------------------------------------------------------------------------
 class user_measurement_pageview(request):
     def get(self, request):
         return render(request, 'Predicting_app/admin_OR_user_measurementPage.html') 
+    #----------------------
     def post(self, request):
         return None
