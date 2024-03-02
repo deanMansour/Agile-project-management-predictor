@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
-
+    <!-- This page include the "registration" AND "Log in" pages content
+        handling it with IF statments,
+        This page also handle the transition to  "admin_OR_user_MainPage",
+        It Also includes some homePage contens(like about The developers of the site"Us").
+    -->
 {% block title %}
     inherted from base.html
 {% endblock %}
@@ -11,8 +15,9 @@
             <img src="{% static "Predicting_app/images/agile_methodology_cyrcle.jpg"%}" alt="AGILE Project Management Pridictor"  />
             <h2>AGILE Project Management Pridictor</h2>
             
-            <h1><a href="">To Log in</a></h1>
-            <h1><a href="">To sign up</a></h1>
+            <!-- activate views by path name -->
+            <h1><a href="{% url "register_pageview_path" %}}"> To sign up</a></h1>
+            <h1><a href="{% url "loging_pageview_path" %}}"> To Log in</a></h1>
         </header>
         <p>
             Hi, We are Developing a website tailored to analyze and visualize a company's data structures,

@@ -1,15 +1,30 @@
 {% extends 'base.html' %}
 {% load static %}
-
+<!-- This is the Main Page of the signed in account,
+    If this is Admin then it will show these options:view data, add data,
+                                                delete data, calculate data.
+    If this is User then it will show these options:view data,calculate data.
+    
+    If "calculate data" option got chosen then this page will transition to
+     "admin_OR_user_measurementPage".
+-->
 {% block title %}
     inherted from base.html
 {% endblock %}
 
 {% block content %}
-    <header>            
+    <header>               <!--I should add IF statments here ???????????-->         
+        <!--ADMIN buttons-->
+        <!-- activate views by path name --> 
         <h1><a href="">view data</a></h1>
         <h1><a href="">add data</a></h1>
         <h1><a href="">delete data</a></h1>
+        <h1><a href="{% url "admin_measurement_pageview_path" %}}"> To measurement page</a></h1>
+        
+        <!--USER buttons-->
+        <h1><a href="">view data</a></h1>
+        <h1><a href="{% url "user_measurement_pageview_path" %}}"> To measurement page</a></h1>
+
     </header>
     <h1>some historic data used to measure project predicting</h1>
 {% endblock %}
