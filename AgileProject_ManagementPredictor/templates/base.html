@@ -7,8 +7,19 @@
     {% block css_files %}{% endblock css_files %}
 </head>
 <body>
-    <!-- Your HTML content here -->
+    <header>
+        <!-- activate view by path name -->
+        <h1><a href="{% url "home_pageview_path" %}}"> TO HomePage</a></h1>
+        
+        <!-- i should add if statment later,
+             for choosing if it admin or user account to show it button-->
+        <h1><a href="{% url "home_pageview_path" %}}"> TO Admin HomePage</a></h1>
+
+        <h1><a href="{% url "home_pageview_path" %}}"> TO User HomePage</a></h1>
+    </header>
+    <!-- HTML content here -->
     {% block content %}
+    <!--content of inherted templates-->
     {% endblock  %}
 </body>
 </html>
