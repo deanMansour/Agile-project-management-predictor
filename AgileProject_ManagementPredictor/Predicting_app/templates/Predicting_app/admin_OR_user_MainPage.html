@@ -9,22 +9,50 @@
      "admin_OR_user_measurementPage".
 -->
 {% block title %}
-    inherted from base.html
+    inherted from base.html --- {{ data.display }}
+    Welcome, {{ user.username }}
 {% endblock %}
 
 {% block content %}
-    <header>               <!--I should add IF statments here ???????????-->         
-        <!--ADMIN buttons-->
-        <!-- activate views by path name --> 
-        <h1><a href="">view data</a></h1>
-        <h1><a href="">add data</a></h1>
-        <h1><a href="">delete data</a></h1>
-        <h1><a href="{% url "admin_measurement_pageview_path" %}}"> Compute Data</a></h1>
+    <header>       
+        <form action="" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <!-- activate views by path name -->            
+            <h1><a href="{% url "logout_gape_view_path" %}}"> To Log Out</a></h1>  
+             <!--ADMIN and USER header buttons-->
+            <!--should display a choose field with "all projects names List",
+            after choosing project from the List it displays the "selected project data"-->
+            
+            <!--ADMIN header buttons-->
+            {% if user_object.is_staff == True %}
+                <!-- Uploading project data file --> 
+                <input type="file" name="uploaded_data_file" />
+                <button>Upload!</button>
+            {% endif %}
+            
+            <!--   after selecting a project from the choose field this section below displayed    -->
+            {% if selected %}   <!--!!!!!!!!!!!!!!!!NOT TRUE VALUE!!!!!!!!!!!!-->
+                <!--ADMIN header buttons-->
+                {% if user_object.is_staff == True %}
+                    <h1><a href="{% url "admin_measurement_pageview_path" %}}"> Compute predicts according to this project Data</a></h1>
+                <!--USER header buttons-->
+                {% else %}
+                    <h1><a href="{% url "user_measurement_pageview_path" %}}"> Compute predicts according to this project Data</a></h1>   
+            {% endif %}
         
-        <!--USER buttons-->
-        <h1><a href="">view data</a></h1>
-        <h1><a href="{% url "user_measurement_pageview_path" %}}"> Compute Data</a></h1>
-
+        </form>
     </header>
-    <h1>some historic data used to measure project predicting</h1>
+    <h1>some historic data that used to measure project predicting</h1>
+    <body>
+        <!--ADMIN body buttons-->
+        {% if user_object.is_staff == True %}
+            <h1><a href="">Edit project data</a></h1>
+            <h1><a href="">Delete project data</a></h1>
+        {% endif %}
+        <!--should display a table that shows the "selected project" data
+        that got chosen in the choose field in the header section
+        -->
+        
+        
+    </body>  
 {% endblock %}

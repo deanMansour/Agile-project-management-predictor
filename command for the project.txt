@@ -1,20 +1,64 @@
+WE used SQLite Database, because its fit django and easy to use.
+
 IN VSCode download these extentions : pyhon, python debugger, pylance, django,
 (python enviroment could be usable)
+
 ------------------INSTALLATION of DJANGO---------------------------
 python -m pip install Django
 OR/python3 -m pip install Django
 ---to check if istalled---
 django-admin
+
 ------------------creating djano project--------------------------
 django-admin startproject AgileProject_ManagementPredictor
+
 ------------------CREATING APP FOLDER-----------------------------
 py manage.py startapp Predicting_app
+
 ------------------RUNNING commands--------------------------------
 py manage.py runserver
 cntl+c ---> to stop running surver
 ---home page---
 http://127.0.0.1:8000
-------------------changes i may implement to the code paths in settings.py for-------------------
+--------changes i may implement to the code paths in settings.py/admin.py for------
 48. Adding Global Static Files
 42. Template Inheritance
 49. Adding CSS Styling
+97. Adding Models to the Admin Area
+------------------Database commands-----------------------------------------
+---updating code DB files---
+py manage.py makemigrations
+py manage.py migrate
+------to view DataBase--------
+--for first time init admin--
+py manage.py createsuperuser
+Username:
+Email address:
+password:
+---FOR entering DB----
+http://127.0.0.1:8000/admin/
+admin
+123
+-----to show profiles-----
+py manage.py shell          #to start manipulate DB
+from Predicting_app.models import Profile
+Profile.objects.all()
+
+---to add/save a new profile(or any other class) instance--(each class has id field by default)
+new_user = profile(....)  #another method is Profile.objects.create(....) wich dont need save() after it
+new_user.save()      #save()-->create new object/update existing object
+
+---deleting object in DB---
+new_user.delete()
+
+---get object---
+Profile.objects.all().get(name=..)        return all objects with name=...
+Profile.objects.get(name=..)        return only one object with name=...
+
+-----saved users accounts---
+user username: user
+     password: user123
+
+------------------Files commands-----------------------------------------
+in views.py to get a file post request:
+request.FILES

@@ -6,18 +6,26 @@
         It Also includes some homePage contens(like about The developers of the site"Us").
     -->
 {% block title %}
-    inherted from base.html
+    inherted from base.html --- {{data.display}}
 {% endblock %}
 
 {% block content %}
     <section>
-        <header>            
-            <img src="{% static "Predicting_app/images/agile_methodology_cyrcle.jpg"%}" alt="AGILE Project Management Pridictor"  />
-            <h2>AGILE Project Management Pridictor</h2>
-            
-            <!-- activate views by path name -->
-            <h1><a href="{% url "register_pageview_path" %}}"> To sign up</a></h1>
-            <h1><a href="{% url "loging_pageview_path" %}}"> To Log in</a></h1>
+        <header>
+            <form action="" method="POST">
+                {% csrf_token %}        
+                <img src="{% static "Predicting_app/images/agile_methodology_cyrcle.jpg"%}" alt="AGILE Project Management Pridictor"  />
+                <h2>AGILE Project Management Pridictor</h2>
+
+                {% if user.is_authenticated %}
+                    <!-- activate views by path name -->            
+                    <h1><a href="{% url "logout_gape_view_path" %}}"> To Log Out</a></h1>
+				
+                {% else %}
+                    <h1><a href="{% url "loging_page_view_path" %}}"> To Log in</a></h1>
+                    <h1><a href="{% url "signup_page_view_path" %}}"> To sign up</a></h1>
+			    {% endif %}
+            </form>
         </header>
         <p>
             Hi, We are Developing a website tailored to analyze and visualize a company's data structures,
@@ -26,4 +34,87 @@
               and enhance project outcomes.
         </p>
     </section>
+
+
+    <!--                                Log-In section                              -->
+    {% if data.display == "Log-In Page" %}
+    <section>
+        <header>
+            <form action="" method="POST">                
+                {% csrf_token %} 
+                {% for field in form %}
+                    <div class="form-control {% if field.errors %} errors {% endif %}">
+                    {{ field.label_tag }}
+                    {% if field.field.widget.input_type == 'password' %}
+                        <div class="password-toggle">
+                            {{ field }}
+                            <span class="password-toggle-icon" onclick="togglePasswordVisibility()"></span>
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {{ field.errors }}
+                    </div>
+                {% endfor %}
+            <button type="submit"> Login </button>
+            </form>
+        </header>
+        <script>
+            function togglePasswordVisibility() {
+                var passwordInput = document.getElementById("id_password");
+                var icon = document.querySelector(".password-toggle-icon");
+                
+                if (passwordInput.type === "password") {
+                    passwordInput.type = "text";
+                    icon.classList.remove("password-toggle-icon-visible");
+                } else {
+                    passwordInput.type = "password";
+                    icon.classList.add("password-toggle-icon-visible");
+                }
+            }
+        </script>
+    </section>
+    {% endif %}
+
+    <!--                                Sign-Up section                              -->
+    {% if data.display == "Sign-up Page" %}
+    <section>
+        <header>
+            <form action="" method="POST">                
+                {% csrf_token %} 
+                {% for field in form %}
+                    <div class="form-control {% if field.errors %} errors {% endif %}">
+                    {{ field.label_tag }}
+                    {% if field.field.widget.input_type == 'password' %}
+                        <div class="password-toggle">
+                            {{ field }}
+                            <span class="password-toggle-icon" onclick="togglePasswordVisibility()"></span>
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {{ field.errors }}
+                    </div>
+                {% endfor %}
+            <button type="submit"> Sign-Up </button>
+            </form>
+        </header>
+        <script>
+            function togglePasswordVisibility() {
+                var passwordInput = document.getElementById("id_password");
+                var icon = document.querySelector(".password-toggle-icon");
+                
+                if (passwordInput.type === "password") {
+                    passwordInput.type = "text";
+                    icon.classList.remove("password-toggle-icon-visible");
+                } else {
+                    passwordInput.type = "password";
+                    icon.classList.add("password-toggle-icon-visible");
+                }
+            }
+        </script>
+    </section>
+    {% endif %}
+
+    
 {% endblock %}
