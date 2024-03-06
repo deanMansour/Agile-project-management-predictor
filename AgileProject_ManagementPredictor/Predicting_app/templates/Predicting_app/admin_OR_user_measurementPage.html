@@ -8,35 +8,38 @@
         
         This page also include return to singed in account MainPage.
     -->
-{% block title %}
-    inherted from base.html --- {{ data.display }}
-    Welcome, {{ user.username }}
-{% endblock %}
-
 {% block content %}
-    <header>              <!--I should add IF statments here !!!!!!!!!!!!!!!-->   
+    {% block title %}
+        Welcome, {{ user.username }}
+    {% endblock %}
+    <header>
         <form action="" method="POST">
             {% csrf_token %}
             <!-- activate views by path name -->            
-            <h1><a href="{% url "logout_gape_view_path" %}}"> To Log Out</a></h1>
+            <h1><a href="{% url "logout_page_view_path" %}"> To Log Out</a></h1>
             
             <!--ADMIN buttons-->
-            {% if user_object.is_staff == True %}
-                <h1><a href="{% url "admin_MainPage_view_path" %}}"> TO Admin MainPage</a></h1>
+            {% if user.is_staff == True %}
+                <h1><a href="{% url "admin_MainPage_view_path" %}"> TO Admin MainPage</a></h1>
                 <h1><a href="">EDIT measures metrics </a></h1>
                 <h1><a href="">EDIT grapgh metrics </a></h1>
-            {% endif %}
-            
+
             <!--USER buttons-->
             {% else %}
-                <h1><a href="{% url "user_MainPage_view_path" %}}"> TO User MainPage</a></h1>
+                <h1><a href="{% url "user_MainPage_view_path" %}"> TO User MainPage</a></h1>
             {% endif %}
 
             <!--ADMIN and USER buttons-->
-            <h1><a href="">show measures</a></h1>
-            <h1><a href="">show graph</a></h1>
+            <!--Measurement Options-->
+            <h1><a href="">Compute developer expertise score</a></h1>
+            <h1><a href="">Compute developer average bug fixing time</a></h1>
+            <h1><a href="">Compute priority weighted fixed issues</a></h1>
 
         </form>
     </header>
-    <h1>some measures and graphs content measured according to the projects saved data</h1>
+    <h1>measurement results content that got computed according to the selected projects data</h1>
+    <body>
+        <!--Add the measurement results here-->
+    </body>  
+
 {% endblock %}

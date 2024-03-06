@@ -12,8 +12,10 @@
 </head>
 <body>
     <header>
-        <!-- activate view by path name -->
-        <h1><a href="{% url "home_pageview_path" %}}"> TO HomePage</a></h1>
+        <h1> AgileProject Management Predictor </h1>
+        <h3>Current displayed Page is: {{ data.display }}</h3>
+        <!-- activate view by path name -->        
+        <h1><a href="{% url "home_page_view_path" %}"> TO HomePage</a></h1>
     </header>
     <!-- HTML content here -->
     {% block content %}

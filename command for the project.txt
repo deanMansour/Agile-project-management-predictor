@@ -20,6 +20,8 @@ py manage.py runserver
 cntl+c ---> to stop running surver
 ---home page---
 http://127.0.0.1:8000
+--admin DB--
+http://127.0.0.1:8000/admin/
 --------changes i may implement to the code paths in settings.py/admin.py for------
 48. Adding Global Static Files
 42. Template Inheritance

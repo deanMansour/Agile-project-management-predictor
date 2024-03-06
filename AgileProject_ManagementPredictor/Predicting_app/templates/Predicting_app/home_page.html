@@ -5,26 +5,34 @@
         This page also handle the transition to  "admin_OR_user_MainPage",
         It Also includes some homePage contens(like about The developers of the site"Us").
     -->
-{% block title %}
-    inherted from base.html --- {{data.display}}
-{% endblock %}
-
 {% block content %}
+    {% block title %}        
+        {% if user.is_authenticated %}
+            Logged-In account : {{ user.username }}
+        {% else %}
+            There is no Logged-In account.
+        {% endif %}
+    {% endblock %}
+    
     <section>
         <header>
             <form action="" method="POST">
-                {% csrf_token %}        
-                <img src="{% static "Predicting_app/images/agile_methodology_cyrcle.jpg"%}" alt="AGILE Project Management Pridictor"  />
-                <h2>AGILE Project Management Pridictor</h2>
-
+                {% csrf_token %}       
                 {% if user.is_authenticated %}
                     <!-- activate views by path name -->            
-                    <h1><a href="{% url "logout_gape_view_path" %}}"> To Log Out</a></h1>
-				
+                    <h1><a href="{% url "logout_page_view_path" %}"> To Log Out</a></h1>
+                    {% if user.is_staff == True %}
+                        <h1><a href="{% url "admin_MainPage_view_path" %}"> To Admin MainPage</a></h1>
+                    {% else %}
+                        <h1><a href="{% url "user_MainPage_view_path" %}"> To User MainPage</a></h1>
+                    {% endif %}
+
                 {% else %}
-                    <h1><a href="{% url "loging_page_view_path" %}}"> To Log in</a></h1>
-                    <h1><a href="{% url "signup_page_view_path" %}}"> To sign up</a></h1>
+                    <h1><a href="{% url "loging_page_view_path" %}"> To Log in</a></h1>
+                    <h1><a href="{% url "signup_page_view_path" %}"> To sign up</a></h1>
 			    {% endif %}
+                <img src="{% static "Predicting_app/images/agile_methodology_cyrcle.jpg"%}" alt="AGILE Project Management Pridictor"  />
+                <h2>AGILE Project Management Pridictor</h2> 
             </form>
         </header>
         <p>
@@ -44,16 +52,18 @@
                 {% csrf_token %} 
                 {% for field in form %}
                     <div class="form-control {% if field.errors %} errors {% endif %}">
-                    {{ field.label_tag }}
-                    {% if field.field.widget.input_type == 'password' %}
-                        <div class="password-toggle">
-                            {{ field }}
-                            <span class="password-toggle-icon" onclick="togglePasswordVisibility()"></span>
-                        </div>
-                    {% else %}
-                        {{ field }}
-                    {% endif %}
-                    {{ field.errors }}
+                        {{ field.label_tag }}
+                        {% if field.field.widget.input_type == 'password' %}
+                            <div class="password-toggle">
+                                {{ field }}
+                                <span class="password-toggle-icon" onclick="togglePasswordVisibility()"></span>
+                            </div>
+                        {% else %}
+                            <div>
+                                {{ field }}
+                            </div>
+                        {% endif %}
+                        {{ field.errors }}
                     </div>
                 {% endfor %}
             <button type="submit"> Login </button>
@@ -91,7 +101,9 @@
                             <span class="password-toggle-icon" onclick="togglePasswordVisibility()"></span>
                         </div>
                     {% else %}
-                        {{ field }}
+                        <div>
+                            {{ field }}
+                        </div>
                     {% endif %}
                     {{ field.errors }}
                     </div>
