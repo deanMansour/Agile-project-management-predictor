@@ -5,17 +5,14 @@
         This page also handle the transition to  "admin_OR_user_MainPage",
         It Also includes some homePage contens(like about The developers of the site"Us").
     -->
-{% block content %}
-    {% block title %}        
-        {% if user.is_authenticated %}
-            Logged-In account : {{ user.username }}
-        {% else %}
-            There is no Logged-In account.
-        {% endif %}
-    {% endblock %}
-    
+{% block content %}    
     <section>
         <header>
+            {% if user.is_authenticated %}
+            Logged-In username : {{ user.username }}
+            {% else %}
+                There is no Logged-In account.
+            {% endif %}
             <form action="" method="POST">
                 {% csrf_token %}       
                 {% if user.is_authenticated %}

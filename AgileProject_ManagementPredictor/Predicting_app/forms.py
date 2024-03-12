@@ -3,11 +3,6 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-
-
-class Uploaded_file_form(forms.Form):
-    uploaded_file = forms.FileField()
-
 #=======================================================================================================
 """ To create class form that link to model.py,
 so with User_SignUp_Form_object.save() will execute User_new_object.save()
@@ -22,3 +17,10 @@ class User_SignUp_Form(UserCreationForm):
         # field from User class that chosen to render it to template as form
         # (password2 -->for validation)
         fields = ('username', 'password1', 'password2')
+
+#===============================EXCEL TYPE FILES(xls/csv)================================================
+# class UploadExcelForm(forms.Form):
+#     excel_file = forms.FileField(label='Select a xls file')
+
+# class UploadCSVForm(forms.Form):
+#     csv_file = forms.FileField(label='Select a CSV file')

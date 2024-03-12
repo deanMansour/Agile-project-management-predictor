@@ -7,13 +7,18 @@
     -->    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock title %}</title>
-    {% block css_files %}{% endblock css_files %}
+    <title>
+        {% block title %}
+          {{ data.display }}
+        {% endblock title %}
+    </title>
+    {% block css_files %}
+     
+    {% endblock css_files %}
 </head>
 <body>
     <header>
         <h1> AgileProject Management Predictor </h1>
-        <h3>Current displayed Page is: {{ data.display }}</h3>
         <!-- activate view by path name -->        
         <h1><a href="{% url "home_page_view_path" %}"> TO HomePage</a></h1>
     </header>

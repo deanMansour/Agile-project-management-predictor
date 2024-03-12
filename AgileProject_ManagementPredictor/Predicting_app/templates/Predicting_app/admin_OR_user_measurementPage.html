@@ -1,18 +1,17 @@
 {% extends 'base.html' %}
 {% load static %}
     <!-- This is the Measurement Page of the signed in account,
-        If this is Admin then it will show these options: show measures,show graph,
-                                        EDIT measures metrics,EDIT grapgh metrics.
-        If this is User then it will show these options: show measures,show graph.
-        The chosen option will be displayed here in this page.
+        If this is Admin then it will show these options: EDIT measures metrics,EDIT grapgh metrics,
+        Compute developer expertise score,Compute developer average bug fixing time,Compute priority weighted fixed issues
         
-        This page also include return to singed in account MainPage.
+        If this is User then it will show these options: 
+        Compute developer expertise score,Compute developer average bug fixing time,Compute priority weighted fixed issues
+        
+        This page also include return to singed in account MainPage button.
     -->
 {% block content %}
-    {% block title %}
-        Welcome, {{ user.username }}
-    {% endblock %}
     <header>
+        Welcome, {{ user.username }}
         <form action="" method="POST">
             {% csrf_token %}
             <!-- activate views by path name -->            
