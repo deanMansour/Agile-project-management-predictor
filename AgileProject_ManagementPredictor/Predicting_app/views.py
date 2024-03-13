@@ -204,7 +204,16 @@ class admin_MainPage_view(View):
                 project.delete()
         #----------------------
         def compute_predicts():
-            return redirect('admin_measurement_pageview_path',self.selected_project_ids,self.selected_excel_projects)
+            all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
+            user_object = request.user        
+            data_to_render = {
+                'display': "Admin Main Page",
+                'all_projects': all_excel_projects,
+                'selected_excel_projects': self.selected_excel_projects,
+                'selected_project_ids': self.selected_project_ids,  # Pass selected project IDs to the template
+                'error_message': error_message
+            }        
+            return render(request, 'Predicting_app/admin_OR_user_measurementPage.html', {'data': data_to_render, 'user': user_object, 'form': form}) 
         #--------------------------------------------------------------------------------
         form = []
 
@@ -317,13 +326,39 @@ class user_MainPage_view(View):
 class admin_measurement_page_view(View):
     @method_decorator(login_required)
     def get(self, request):
-        # request.user--> returns the authenticated User class object
-        user_object = request.user
-        data_to_render = {'display': "Admin Measurement Page"}
-        return render(request, 'Predicting_app/admin_OR_user_measurementPage.html', {'data':data_to_render, 'user':user_object})
+        return None     #   will never be accessed
     #--------------------------------------------------------------------------------
     def post(self, request):
-        return None
+                
+        def compute_developer_expertise_score():
+            return None
+        
+        def compute_developer_average_bug_fixing_time():
+            return None
+       
+        def compute_priority_weighted_fixed_issues():        
+            return None
+        
+        
+        
+        self.selected_project_ids = request.POST.getlist('selected_project_ids')
+        self.selected_excel_projects = request.POST.getlist('selected_excel_projects')
+
+
+        # if clicked in any button statments here
+
+
+        
+        form = []
+        all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
+        user_object = request.user        
+        data_to_render = {
+            'display': "Admin Main Page",
+            'all_projects': all_excel_projects,
+            'selected_excel_projects': self.selected_excel_projects,
+            'selected_project_ids': self.selected_project_ids,  # Pass selected project IDs to the template            
+        }        
+        return render(request, 'Predicting_app/admin_OR_user_measurementPage.html', {'data': data_to_render, 'user': user_object, 'form': form})
 #================================================================================
 class user_measurement_page_view(View):
     @method_decorator(login_required)

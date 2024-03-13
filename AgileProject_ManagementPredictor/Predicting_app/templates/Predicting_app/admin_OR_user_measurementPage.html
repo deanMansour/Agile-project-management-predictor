@@ -1,44 +1,48 @@
 {% extends 'base.html' %}
 {% load static %}
-    <!-- This is the Measurement Page of the signed in account,
-        If this is Admin then it will show these options: EDIT measures metrics,EDIT grapgh metrics,
-        Compute developer expertise score,Compute developer average bug fixing time,Compute priority weighted fixed issues
-        
-        If this is User then it will show these options: 
-        Compute developer expertise score,Compute developer average bug fixing time,Compute priority weighted fixed issues
-        
-        This page also include return to singed in account MainPage button.
-    -->
+<!-- This is the Measurement Page of the signed-in account,
+If this is Admin then it will show these options: EDIT measures metrics,EDIT grapgh metrics,
+Compute developer expertise score,Compute developer average bug fixing time,Compute priority weighted fixed issues
+
+If this is User then it will show these options: 
+Compute developer expertise score,Compute developer average bug fixing time,Compute priority weighted fixed issues
+
+This page also includes a button to return to the signed-in account MainPage.
+-->
 {% block content %}
-    <header>
-        Welcome, {{ user.username }}
-        <form action="" method="POST">
-            {% csrf_token %}
-            <!-- activate views by path name -->            
-            <h1><a href="{% url "logout_page_view_path" %}"> To Log Out</a></h1>
-            
-            <!--ADMIN buttons-->
-            {% if user.is_staff == True %}
-                <h1><a href="{% url "admin_MainPage_view_path" %}"> TO Admin MainPage</a></h1>
-                <h1><a href="">EDIT measures metrics </a></h1>
-                <h1><a href="">EDIT grapgh metrics </a></h1>
+<header>
+    Welcome, {{ user.username }}
+    <form action="" method="POST">
+        {% csrf_token %}
+        <!-- activate views by path name -->            
+        <h1><a href="{% url "logout_page_view_path" %}"> To Log Out</a></h1>
+        
+        <!--ADMIN buttons-->
+        {% if user.is_staff == True %}
+            <h1><a href="{% url "admin_MainPage_view_path" %}"> TO Admin MainPage</a></h1>
+            <h1><a href="">EDIT measures metrics</a></h1>
+            <h1><a href="">EDIT grapgh metrics</a></h1>
 
-            <!--USER buttons-->
-            {% else %}
-                <h1><a href="{% url "user_MainPage_view_path" %}"> TO User MainPage</a></h1>
-            {% endif %}
+        <!--USER buttons-->
+        {% else %}
+            <h1><a href="{% url "user_MainPage_view_path" %}"> TO User MainPage</a></h1>
+        {% endif %}
 
-            <!--ADMIN and USER buttons-->
-            <!--Measurement Options-->
-            <h1><a href="">Compute developer expertise score</a></h1>
-            <h1><a href="">Compute developer average bug fixing time</a></h1>
-            <h1><a href="">Compute priority weighted fixed issues</a></h1>
+        <!--ADMIN and USER buttons-->
+        <!--Measurement Options-->
+        <h1><a href="">Compute developer expertise score</a></h1>
+        <h1><a href="">Compute developer average bug fixing time</a></h1>
+        <h1><a href="">Compute priority weighted fixed issues</a></h1>
 
-        </form>
-    </header>
-    <h1>measurement results content that got computed according to the selected projects data</h1>
-    <body>
-        <!--Add the measurement results here-->
-    </body>  
-
+        <!-- Include selected project IDs and Excel projects -->
+        <input type="hidden" name="selected_project_ids" value="{{ data.selected_project_ids }}">
+        <input type="hidden" name="selected_excel_projects" value="{{ data.selected_excel_projects }}">
+        <!-- Add a button to submit the form with selected projects -->
+        <button type="submit">Compute Predict</button>
+    </form>
+</header>
+<h1>measurement results content that got computed according to the selected projects data</h1>
+<body>
+    <!-- Add the measurement results here -->
+</body>  
 {% endblock %}
