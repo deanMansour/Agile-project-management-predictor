@@ -30,15 +30,21 @@ This page also includes a button to return to the signed-in account MainPage.
 
         <!--ADMIN and USER buttons-->
         <!--Measurement Options-->
-        <h1><a href="">Compute developer expertise score</a></h1>
-        <h1><a href="">Compute developer average bug fixing time</a></h1>
-        <h1><a href="">Compute priority weighted fixed issues</a></h1>
+        <h3>--------------Developer Expertise Score(DES) Section-----------------</h3>
+        <button type="submit" name="compute_DES">Compute developer expertise score(DES)</button>
+       <!--recommended to add calculate Info when mouse hover-->
+        <h1>Priority weighted fixed issues result: </h1>
+        <h1>Versatility and breadth index result: </h1>
+        <h1>Developer average bug fixing time result: </h1>
 
-        <!-- Include selected project IDs and Excel projects -->
-        <input type="hidden" name="selected_project_ids" value="{{ data.selected_project_ids }}">
-        <input type="hidden" name="selected_excel_projects" value="{{ data.selected_excel_projects }}">
+        <h1>DES result : </h1>
+        <h3>--------------Another measurement Section-----------------</h3>
+
+        <h3>--------------Compute All Section-----------------</h3>
+        <!-- Include Selected_Projects() class instance -->
+        <input type="hidden" name="selected_Projects" value="{{ data.selected_Projects_instance }}">
         <!-- Add a button to submit the form with selected projects -->
-        <button type="submit">Compute Predict</button>
+        <button type="submit">Compute All Predicts</button>
     </form>
 </header>
 <h1>measurement results content that got computed according to the selected projects data</h1>

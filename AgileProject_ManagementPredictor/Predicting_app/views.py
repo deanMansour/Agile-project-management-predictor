@@ -1,5 +1,4 @@
 #-------------------------
-import io
 from urllib import request
 from django.views import View
 from django.http import HttpResponse
@@ -21,9 +20,120 @@ from .forms import User_SignUp_Form
 from .models import Excel_File_Data, Excel_Row_Data
 import pandas as pd    # for this : pip install pandas
 import csv          # for csv files
-
+import io
 
 # Create your views here.
+#================================================================================  
+#============================Support Classes=====================================
+#================================= 1 ===============================================
+class Selected_Projects:
+    selected_project_ids = []
+    selected_excel_projects = []
+    
+    def __init__(self, selected_project_ids=None):
+        if selected_project_ids is None:
+            selected_project_ids = []
+        self.selected_project_ids = selected_project_ids
+        self.selected_excel_projects = Excel_File_Data.objects.filter(id__in=self.selected_project_ids)
+
+    def get_list_of_projects(self):
+        #get list of selected projects instances
+        return self.selected_excel_projects
+    
+    def get_list_of_projects_id(self):
+        return self.selected_project_ids
+    
+    def define_projects_by_ids_list(self, project_ids_list):
+        self.selected_project_ids = project_ids_list
+        self.selected_excel_projects = Excel_File_Data.objects.filter(id__in=self.selected_project_ids)
+
+    def unselect(self):
+        self.selected_project_ids = []
+        self.selected_excel_projects = []
+
+    def is_selected(self):
+        # Return True if there are selected projects
+        return bool(self.selected_excel_projects)
+
+    def delete_selected_projects(self):
+        # Loop through each selected project and delete it along with its associated rows
+        for project in self.selected_excel_projects:
+            # Delete associated rows first
+            project.excel_rows.all().delete()
+            # Remove the project from the list of selected projects
+            self.selected_project_ids.remove(project.id)
+            self.selected_excel_projects.remove(project)
+            # Now delete the project itself
+            project.delete()
+
+    def compute_DES(self):
+        des_results_list = Compute_developer_expertise_score(self.selected_project_ids, self.selected_excel_projects)     
+        return des_results_list
+#================================= 2 ===============================================
+class Upload_to_DB:    
+    @staticmethod
+    def csv_file(request):
+        uploaded_file = request.FILES['file']                
+        # Wrap the file content in a text stream
+        with io.TextIOWrapper(uploaded_file, encoding='utf-8') as file:
+            csv_data = csv.reader(file)
+            all_data = []  # Create a list to hold the data from all rows
+            field_names = next(csv_data)  # Assuming the first row contains field names
+
+            # Iterate over the remaining rows
+            for row in csv_data:
+                row_data = {}
+                for field_name, value in zip(field_names, row):
+                    row_data[field_name] = value
+                all_data.append(row_data)  # Append the row data to the list
+
+            return Upload_to_DB.create_excel_file(field_names, all_data)
+    #--------------------------------------------------------------------------------
+    @staticmethod
+    def excel_file(request):
+        uploaded_file = request.FILES['file']
+        with uploaded_file.open(mode='rt') as file:
+            df = pd.read_excel(uploaded_file, engine='openpyxl')  # Specify the engine manually
+
+            # Create a list to hold the data from all rows
+            all_data = []
+            for index, row in df.iterrows():
+                # Create a dictionary to hold the data for the current row
+                row_data = {}
+                for field in df.columns:
+                    row_data[field] = row[field]
+                # Append the row data to the list
+                all_data.append(row_data)
+            
+            field_names = df.columns
+            
+            return Upload_to_DB.create_excel_file(field_names, all_data)
+    #--------------------------------------------------------------------------------
+    @staticmethod
+    def create_excel_file(field_names, all_data):
+        # Create instances of Excel_Row_Data and save them to the database
+        excel_rows_data_instances = []
+        for data in all_data:
+            # excel_row_data_instance = Excel_Row_Data.objects.create(**data)
+            excel_row_data_instance = Excel_Row_Data.objects.create(json_data=data)
+            excel_rows_data_instances.append(excel_row_data_instance)
+
+        # Create an instance of Excel_File_Data and associate it with the Excel_Row_Data instances
+        excel_file_DB_instance = Excel_File_Data.objects.create()
+        # To pick the project name from the first row and name the project
+        for field_name, value in zip(field_names, all_data[0].values()):
+            # Check if the field name contains "project name" (case insensitive)
+            if "project name" in field_name.lower():
+                # Set the project name to the corresponding value
+                excel_file_DB_instance.project_name = value
+                excel_file_DB_instance.save()
+                break  # Exit the loop after setting the project name
+        excel_file_DB_instance.excel_rows.add(*excel_rows_data_instances)
+        return excel_file_DB_instance
+#================================= 3 ===============================================
+class Compute_developer_expertise_score:
+    attribute = None
+
 #================================Home Page views=================================
 #================================================================================
 class home_page_view(View):
@@ -101,135 +211,25 @@ class signup_page_view(View):
 
 #==========================Logged-In account Main Page views=====================
 #================================================================================
-class admin_MainPage_view(View):
-    selected_project_ids = []
-    selected_excel_projects = []
+class admin_MainPage_view(View):    
+    selected_Projects_instance = Selected_Projects()
+    excel_file_DB_instance = None
+    
     @method_decorator(login_required)
     def get(self, request):
-        #form = UploadExcelForm()
-        form = []
-        self.selected_excel_projects = []
-        self.selected_project_ids = []
-
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files
         user_object = request.user
         data_to_render = {
             'display': "Admin Main Page", 
             'all_projects': all_excel_projects, 
-            'selected_excel_projects': self.selected_excel_projects,
-            'selected_project_ids': self.selected_project_ids,  # Pass selected project IDs to the template
-        }
-      
-        return render(request, 'Predicting_app/admin_OR_user_MainPage.html', {'data':data_to_render, 'user':user_object, 'form': form})
+            'selected_excel_projects': self.selected_Projects_instance.get_list_of_projects(),
+            'selected_Projects_instance':self.selected_Projects_instance,        }      
+        return render(request, 'Predicting_app/admin_OR_user_MainPage.html', {'data':data_to_render, 'user':user_object})
     #--------------------------------------------------------------------------------
-    def post(self, request):      
-        
-        def upload_csv():
-            csv_file = request.FILES['file']                
-            # Wrap the file content in a text stream
-            with io.TextIOWrapper(csv_file, encoding='utf-8') as file:
-                csv_data = csv.reader(file)
-                all_data = []  # Create a list to hold the data from all rows
-                field_names = next(csv_data)  # Assuming the first row contains field names
-
-                # Iterate over the remaining rows
-                for row in csv_data:
-                    row_data = {}
-                    for field_name, value in zip(field_names, row):
-                        row_data[field_name] = value
-                    all_data.append(row_data)  # Append the row data to the list
-                
-                # Create instances of Excel_Row_Data and save them to the database
-                excel_rows_data_instances = []
-                for data in all_data:
-                    # excel_row_data_instance = Excel_Row_Data.objects.create(**data)
-                    excel_row_data_instance = Excel_Row_Data.objects.create(json_data=data)
-                    excel_rows_data_instances.append(excel_row_data_instance)
-
-                # Create an instance of Excel_File_Data and associate it with the Excel_Row_Data instances
-                excel_file_instance = Excel_File_Data.objects.create()
-                # To pick the project name from the first row and name the project
-                for field_name, value in zip(field_names, all_data[0].values()):
-                    # Check if the field name contains "project name" (case insensitive)
-                    if "project name" in field_name.lower():
-                        # Set the project name to the corresponding value
-                        excel_file_instance.project_name = value
-                        excel_file_instance.save()
-                        break  # Exit the loop after setting the project name
-                excel_file_instance.excel_rows.add(*excel_rows_data_instances)
-        #----------------------
-        def upload_excel():
-            excel_file = request.FILES['file']
-            with excel_file.open(mode='rt') as file:
-                df = pd.read_excel(excel_file, engine='openpyxl')  # Specify the engine manually
-
-                # Create a list to hold the data from all rows
-                all_data = []
-                for index, row in df.iterrows():
-                    # Create a dictionary to hold the data for the current row
-                    row_data = {}
-                    for field in df.columns:
-                        row_data[field] = row[field]
-                    # Append the row data to the list
-                    all_data.append(row_data)
-
-                # Create instances of Excel_Row_Data and save them to the database
-                excel_rows_data_instances = []
-                for data in all_data:
-                    # excel_row_data_instance = Excel_Row_Data.objects.create(**data)
-                    excel_row_data_instance = Excel_Row_Data.objects.create(json_data=data)
-                    excel_rows_data_instances.append(excel_row_data_instance)
-
-                # Create an instance of Excel_File_Data and associate it with the Excel_Row_Data instances
-                excel_file_instance = Excel_File_Data.objects.create()
-                # To pick the project name from the first row and name the project
-                for field_name, value in zip(df.columns, all_data[0].values()):
-                    # Check if the field name contains "project name" (case insensitive)
-                    if "project name" in field_name.lower():
-                        # Set the project name to the corresponding value
-                        excel_file_instance.project_name = value
-                        excel_file_instance.save()
-                        break  # Exit the loop after setting the project name
-                excel_file_instance.excel_rows.add(*excel_rows_data_instances)
-        #----------------------
-        def delete_project():
-            # Loop through each selected project and delete it along with its associated rows
-            for project in self.selected_excel_projects:
-                # Delete associated rows first
-                project.excel_rows.all().delete()
-                # Remove the project from the list of selected projects
-                self.selected_project_ids.remove(project.id)
-                self.selected_excel_projects.remove(project)
-                # Now delete the project itself
-                project.delete()
-        #----------------------
-        def compute_predicts():
-            all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
-            user_object = request.user        
-            data_to_render = {
-                'display': "Admin Main Page",
-                'all_projects': all_excel_projects,
-                'selected_excel_projects': self.selected_excel_projects,
-                'selected_project_ids': self.selected_project_ids,  # Pass selected project IDs to the template
-                'error_message': error_message
-            }        
-            return render(request, 'Predicting_app/admin_OR_user_measurementPage.html', {'data': data_to_render, 'user': user_object, 'form': form}) 
-        #--------------------------------------------------------------------------------
-        form = []
-
-        # Check if 'selected-project' is in the request POST data--->if yes, then there is already selected list of projects id
-        if 'selected-projects' in request.POST:
-            # Retrieve selected project IDs from the request POST data
-            self.selected_project_ids = request.POST.getlist('selected-projects', [])
-
-            # Retrieve selected excel projects from the database
-            self.selected_excel_projects = Excel_File_Data.objects.filter(id__in=self.selected_project_ids)
-        
+    def post(self, request):
         #if clicked on unselect button
         if 'Unselect Projects' in request.POST:
-            # Retrieve selected project IDs from the request POST data
-            self.selected_project_ids = []
-            self.selected_excel_projects = []    
+            self.selected_Projects_instance.unselect()
         
         error_message = None
         # if clicked on "Select Projects" button
@@ -237,10 +237,7 @@ class admin_MainPage_view(View):
             # Check if 'selected-project-ids' is in the request POST data--->if yes, then now some projects been selected
             if 'selected-project-ids' in request.POST:
                 # Retrieve selected project IDs from the request POST data
-                self.selected_project_ids = request.POST.getlist('selected-project-ids', [])
-
-                # Retrieve selected excel projects from the database
-                self.selected_excel_projects = Excel_File_Data.objects.filter(id__in=self.selected_project_ids)
+                self.selected_Projects_instance.define_projects_by_ids_list(request.POST.getlist('selected-project-ids', []))
             else:
                 error_message = 1 # Add an error message
             
@@ -250,9 +247,9 @@ class admin_MainPage_view(View):
             uploaded_file = request.FILES.get('file')
             if uploaded_file:
                 if uploaded_file.name.endswith('.csv'):
-                    upload_csv()
+                    self.excel_file_DB_instance = Upload_to_DB.csv_file(request)
                 else:
-                    upload_excel()
+                    self.excel_file_DB_instance = Upload_to_DB.excel_file(request)
             else:
                 # Handle error if no file chosen
                 error_message = 2
@@ -260,27 +257,24 @@ class admin_MainPage_view(View):
         # if clicked on "Delete selected projects data" button
         #(its shown in template only if there is selected project)
         if 'Delete selected projects data' in request.POST:
-            delete_project()
+            self.selected_Projects_instance.delete_selected_projects()
 
-        
-        # if clicked on "Get project Predict measurements according to selected projects data" button
-        #(its shown in template only if there is selected project)
-        if 'Get project Predict measurements according to selected projects data' in request.POST:
-            compute_predicts()
-        
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
         user_object = request.user        
         data_to_render = {
             'display': "Admin Main Page",
             'all_projects': all_excel_projects,
-            'selected_excel_projects': self.selected_excel_projects,
-            'selected_project_ids': self.selected_project_ids,  # Pass selected project IDs to the template
+            'selected_excel_projects': self.selected_Projects_instance.get_list_of_projects(),
+            'selected_Projects_instance':self.selected_Projects_instance,
             'error_message': error_message
-        }        
-        return render(request, 'Predicting_app/admin_OR_user_MainPage.html', {'data': data_to_render, 'user': user_object, 'form': form}) 
+        }
+        # if clicked on "Get project Predict measurements according to selected projects data" button
+        #(its shown in template only if there is selected project)
+        if 'Get project Predict measurements according to selected projects data' in request.POST:
+            return render(request, 'Predicting_app/admin_OR_user_measurementPage.html', {'data': data_to_render, 'user': user_object}) 
+        return render(request, 'Predicting_app/admin_OR_user_MainPage.html', {'data': data_to_render, 'user': user_object}) 
 
-#================================================================================      
-#--------------------------------------------------------------------------------
+#================================================================================ 
 class user_MainPage_view(View):
     @method_decorator(login_required)
     def get(self, request):
@@ -324,39 +318,29 @@ class user_MainPage_view(View):
 #======================Logged-In account Measurement page views==================
 #================================================================================
 class admin_measurement_page_view(View):
+    selected_Projects_instance = Selected_Projects()
+    
     @method_decorator(login_required)
     def get(self, request):
-        return None     #   will never be accessed
+        return None     #   will never be accessed--becuase template got activated from another class
     #--------------------------------------------------------------------------------
-    def post(self, request):
-                
-        def compute_developer_expertise_score():
-            return None
-        
-        def compute_developer_average_bug_fixing_time():
-            return None
-       
-        def compute_priority_weighted_fixed_issues():        
-            return None
-        
-        
-        
-        self.selected_project_ids = request.POST.getlist('selected_project_ids')
-        self.selected_excel_projects = request.POST.getlist('selected_excel_projects')
+    def post(self, request):        
+        self.selected_Projects_instance = request.POST('selected_Projects')
 
+        # if clicked on any of compute buttons
+        if 'compute_DES' in request.POST:
+            des_results_list = self.selected_Projects_instance.compute_DES()
 
-        # if clicked in any button statments here
-
-
-        
+        pridict_compute_results_dict = {'des' : des_results_list}
         form = []
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
         user_object = request.user        
         data_to_render = {
-            'display': "Admin Main Page",
+            'display': "Admin Measurement Page",
             'all_projects': all_excel_projects,
-            'selected_excel_projects': self.selected_excel_projects,
-            'selected_project_ids': self.selected_project_ids,  # Pass selected project IDs to the template            
+            'selected_excel_projects': self.selected_Projects_instance.get_list_of_projects(),
+            'selected_Projects_instance':self.selected_Projects_instance,
+            'result': pridict_compute_results_dict
         }        
         return render(request, 'Predicting_app/admin_OR_user_measurementPage.html', {'data': data_to_render, 'user': user_object, 'form': form})
 #================================================================================
