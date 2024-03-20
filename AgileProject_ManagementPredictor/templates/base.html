@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- This page is the base page which all the templates inhert it,
+        it handle the css styles of pages,
+        it also include a button to return back to the homepage.
+    -->    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% block title %}
+          {{ data.display }}
+        {% endblock title %}
+    </title>
+    {% block css_files %}
+     
+    {% endblock css_files %}
+</head>
+<body>
+    <header>
+        <h1> AgileProject Management Predictor </h1>
+        <!-- activate view by path name -->        
+        <h1><a href="{% url "home_page_view_path" %}"> TO HomePage</a></h1>
+    </header>
+    <!-- HTML content here -->
+    {% block content %}
+    <!--content of inherted templates-->
+    {% endblock  %}
+</body>
+</html>
