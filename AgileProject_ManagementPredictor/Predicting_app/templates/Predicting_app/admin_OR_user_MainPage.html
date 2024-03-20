@@ -20,7 +20,7 @@ If "get project Predict" button clicked then this page will transition to
                 cursor: pointer;
               }
               
-              <!-- Style the dropdown content (hidden by default) */ -->
+              <!--/* Style the dropdown content (hidden by default) */ -->
               .dropdown-content {
                 display: none;
                 position: absolute;
@@ -174,7 +174,8 @@ If "get project Predict" button clicked then this page will transition to
     }
 
     function showNextProject() {
-        if (currentProjectIndex < {{ data.selected_excel_projects|length }} - 1) {
+        x=data.selected_excel_projects|length
+        if (currentProjectIndex < x - 1) {
             currentProjectIndex++;
             updateProjectVisibility();
         }

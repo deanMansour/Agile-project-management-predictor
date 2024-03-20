@@ -204,7 +204,6 @@ class signup_page_view(View):
             user_object.save()
             return redirect('home_page_view_path')
         else:
-            form = User_SignUp_Form()
             form.add_error(None, 'Invalid username or password.')
             data_to_render = {'display': "Sign-up Page"}
             return render(request, 'Predicting_app/home_page.html', {'form': form, 'data':data_to_render})

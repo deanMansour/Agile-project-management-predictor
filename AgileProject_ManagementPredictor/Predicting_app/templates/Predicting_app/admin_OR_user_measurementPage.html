@@ -11,7 +11,9 @@ This page also includes a button to return to the signed-in account MainPage.
 -->
 {% block content %}
 <header>
+    <div style="position: absolute; left: 5px;">
     Welcome, {{ user.username }}
+</div>
     <form action="" method="POST">
         {% csrf_token %}
         <!-- activate views by path name -->            

@@ -6,7 +6,7 @@
         It Also includes some homePage contens(like about The developers of the site"Us").
     -->
 {% block content %}    
-
+<section>
         <header>
             <link href="{% static 'Predicting_app/loginStyle.css' %}" rel="stylesheet">
             {% if user.is_authenticated %}
@@ -41,13 +41,13 @@
               and enhance project outcomes.
         </div>
     </p>
+</section>
 
 
 
     <!--                                Log-In section                              -->
     {% if data.display == "Log-In Page" %}
-
-
+    <section>
             <form action="" method="POST">                
                 {% csrf_token %} 
                 {% for field in form %}
@@ -88,7 +88,8 @@
     <!--                                Sign-Up section                              -->
     {% if data.display == "Sign-up Page" %}
 
-
+        <section>
+        <header>
             <form action="" method="POST">                
                 {% csrf_token %} 
                 {% for field in form %}
@@ -109,7 +110,7 @@
                 {% endfor %}
             <button type="submit"> Sign-Up </button>
             </form>
-    
+        </header>
         <script>
             function togglePasswordVisibility() {
                 var passwordInput = document.getElementById("id_password");
@@ -124,7 +125,7 @@
                 }
             }
         </script>
-    
+    </section>
     {% endif %}
 
     
