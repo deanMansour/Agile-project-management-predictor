@@ -18,9 +18,9 @@
 </head>
 <body>
     <header>
-        <h1> AgileProject Management Predictor </h1>
-        <!-- activate view by path name -->        
-        <h1><a href="{% url "home_page_view_path" %}"> TO HomePage</a></h1>
+        <div style="position: absolute; top: 5px; left: 0; ">
+        <h1><a href="{% url "home_page_view_path" % }; style="text-decoration:none; color: antiquewhite;"> AgileProject Management Predictor</a></h1>
+        </div>
     </header>
     <!-- HTML content here -->
     {% block content %}
