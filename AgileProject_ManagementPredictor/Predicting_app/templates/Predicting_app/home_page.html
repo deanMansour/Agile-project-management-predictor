@@ -8,35 +8,38 @@
 {% block content %}    
     <section>
         <header>
+            <link href="{% static 'Predicting_app/loginStyle.css' %}" rel="stylesheet">
             {% if user.is_authenticated %}
-            Logged-In username : {{ user.username }}
+            <span style="color: antiquewhite;" class="logged-in-title">Logged-In account : {{ user.username }}</span>
             {% else %}
-                There is no Logged-In account.
+            <span style="color: antiquewhite;" class="logged-out-title">There is no Logged-In account.</span>
             {% endif %}
+            <div class="wrapper">
             <form action="" method="POST">
                 {% csrf_token %}       
                 {% if user.is_authenticated %}
                     <!-- activate views by path name -->            
-                    <h1><a href="{% url "logout_page_view_path" %}"> To Log Out</a></h1>
+                    <h1><a href="{% url "logout_page_view_path" %}"> Log Out</a></h1>
                     {% if user.is_staff == True %}
-                        <h1><a href="{% url "admin_MainPage_view_path" %}"> To Admin MainPage</a></h1>
+                        <h1><a href="{% url "admin_MainPage_view_path" %}"> Admin MainPage</a></h1>
                     {% else %}
-                        <h1><a href="{% url "user_MainPage_view_path" %}"> To User MainPage</a></h1>
+                        <h1><a href="{% url "user_MainPage_view_path" %}"> ToU ser MainPage</a></h1>
                     {% endif %}
 
                 {% else %}
-                    <h1><a href="{% url "loging_page_view_path" %}"> To Log in</a></h1>
-                    <h1><a href="{% url "signup_page_view_path" %}"> To sign up</a></h1>
+                <h1><a href="{% url "loging_page_view_path" %} " style="text-decoration: none; color: antiquewhite;"> Log in</a></h1>
+                <h1><a href="{% url "signup_page_view_path" %} " style="text-decoration: none; color: antiquewhite;"> sign up</a></h1>
 			    {% endif %}
-                <img src="{% static "Predicting_app/images/agile_methodology_cyrcle.jpg"%}" alt="AGILE Project Management Pridictor"  />
-                <h2>AGILE Project Management Pridictor</h2> 
             </form>
+            </div>
         </header>
         <p>
-            Hi, We are Developing a website tailored to analyze and visualize a company's data structures,
-             aimed at uncovering trends and critical insights pivotal for effective management of development processes and teams.
-              This platform implement AGILE methodologies to empower stakeholders to make informed decisions, optimize workflows, 
-              and enhance project outcomes.
+            <div style="position: absolute; bottom: 5px; left: 5px; color: antiquewhite;">
+                Hi, We are Developing a website tailored to analyze and visualize a company's data structures,
+                aimed at uncovering trends and critical insights pivotal for effective management of development processes and teams.
+                This platform implement AGILE methodologies to empower stakeholders to make informed decisions, optimize workflows, 
+                and enhance project outcomes.
+            </div>
         </p>
     </section>
 
