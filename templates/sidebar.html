@@ -1,0 +1,74 @@
+<div class="d-flex">
+    <!-- Sidebar -->
+    <div class="d-flex flex-column flex-shrink-0 p-3 text-bg-dark" style="width: 280px; height: 100vh;">
+        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+            <svg class="bi pe-none me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
+            <span class="fs-4"> Insights </span>
+        </a>
+        
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <form action="{% url 'Dashboard' %}" method="get">
+                <select name="project-select" id="id_project" style="width: 200px; height: 28px;">
+                    <option value="">Select Project</option>
+                    {% for project in data.all_projects %}
+                        <option value="{{ project.id }}">{{ project.project_name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Select Project</button>
+            </form>
+            <li class="nav-item">
+                <a href="#" class="nav-link active" aria-current="page" onclick="showOverview()">
+                    <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#home"/></svg>
+                    Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link text-white" onclick="showMeasurements()">
+                    <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#speedometer2"/></svg>
+                    Measurements
+                </a>
+            </li>
+        </ul>
+
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <img src="" alt="" width="32" height="32" class="rounded-circle me-2">
+              <strong>{{user.username}}</strong>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+              <li><a class="dropdown-item" href="#">New project...</a></li>
+              <li><a class="dropdown-item" href="#">Settings</a></li>
+              <li><a class="dropdown-item" href="#">Profile</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#">Sign out</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="w-100" id="main-content">
+        <!-- Content will be loaded dynamically here -->
+    </div>
+</div>
+
+<script>
+   function showOverview() {
+        fetch('overview.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("main-content").innerHTML = data;
+            })
+            .catch(error => console.error('Error fetching overview:', error));
+    }
+
+    // Function to show the Measurements content
+    function showMeasurements() {
+        fetch('measurements.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("main-content").innerHTML = data;
+            })
+            .catch(error => console.error('Error fetching measurements:', error));
+    }
+</script>

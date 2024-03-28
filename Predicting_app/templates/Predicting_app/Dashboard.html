@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex">
+   {% include "sidebar.html" %}
+   {% include "Predicting_app/overview.html" %}
+
+   <div class="w-100"> 
+       <!--{% include "header.html" %}-->
+       <div class="my-3 mx-3"> 
+            <div>
+                {% if data.chosen_project %}
+                    <h2 id="project-name">Selected Project: {{ data.selected_main_project.project_name }}</h2>
+                    <hr>
+                    {% else %}
+                    <!--<p >No project selected</p>-->
+                {% endif %}
+            </div>
+ 
+            <script src="{% static 'Predicting_app/js/project_details.js' %}"></script>            
+       </div>
+    </div>      
+</div>
+{% endblock content %}
+
+
+

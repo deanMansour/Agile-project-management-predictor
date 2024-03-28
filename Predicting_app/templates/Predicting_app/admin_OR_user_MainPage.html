@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+<!-- This is the Main Page of the signed-in account,
+If this is Admin then it will show these options: select projects, upload project,
+                                                        delete projects, get project Predict.
+If this is User then it will show these options: select project, get project Predict.
+
+If "get project Predict" button clicked then this page will transition to
+"admin_OR_user_measurementPage".
+-->
+{% block content %}
+    <header>
+        <style>
+            .dropbtn {
+                background-color: #fff;
+                color: #333;
+                padding: 10px;
+                font-size: 16px;
+                border: none;
+                cursor: pointer;
+              }
+              
+              <!-- Style the dropdown content (hidden by default)  -->
+              .dropdown-content {
+                display: none;
+                position: absolute;
+                background-color: #f9f9f9;
+                box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                z-index: 1;
+                max-height: 150px; /* Adjust as needed */
+                overflow-y: auto; /* Enable vertical scrollbar */
+                width: auto; /* Adjust as needed */
+                border: 1px solid #ddd;
+              }
+              
+              <!--/* Style the dropdown content when it is shown */-->
+              .dropdown-content.show {
+                display: block;
+              }
+              
+              <!--/* Style the checkboxes */-->
+              .dropdown-content input[type="checkbox"] {
+                margin: 5px;
+              }
+              
+              <!--/* Style the label */-->
+              .dropdown-content label {
+                display: block;
+                margin: 5px 0;
+              }
+              
+              <!--/* Style the button when the dropdown is open */-->
+              .dropdown.open .dropbtn {
+                background-color: #ccc;
+              }
+              
+        </style>    
+        Welcome, {{ user.username }}  
+        <form action="" method="POST" enctype="multipart/form-data" id="main-form">
+            {% csrf_token %}
+            <!-- activate views by path name -->            
+            <h1><a href="{% url "logout_page_view_path" %}"> Log Out</a></h1>
+            <!--ADMIN header buttons-->
+            {% if user.is_staff == True %}
+                <h3>-----------Admin Files Uploading------------</h3>                
+                <!-- Input field for Uploading project data file(that also accept .csv files) -->                
+                <input type="file" name="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                <button type="submit" name="Upload Project Data">Upload Project Data</button>
+                <!--error message if no file chosen-->
+                {% if data.error_message == 2 %}   
+                    <ul class="messages">
+                        <li>Please select a file to upload.</li>                    
+                    </ul>
+                {% endif %}
+            {% endif %} 
+            <h3>--------------projects selection-----------------</h3> 
+             <!--ADMIN and USER header buttons-->
+            <!--drop list with Checkbox-style interface for selecting projects -->
+            <div class="dropdown">
+                <div class="dropdown-content">
+                    {% if data.selected_excel_projects %}
+                        {% for project in data.selected_excel_projects %}
+                            <label>{{ forloop.counter }}:<input type="checkbox" name="selected-projects" id="selected-projects" value="{{ project.id }}" checked> {{ project.project_name }}</label>
+                        {% endfor %}
+                        <button id="unselect-btn" name="Unselect Projects" type="submit">Unselect Projects</button>
+                    {% else %}
+                        {% for project in data.all_projects %}
+                            <label>{{ forloop.counter }}:<input type="checkbox" name="selected-project-ids" id="selected-project-ids" value="{{ project.id }}"> {{ project.project_name }}</label> 
+                        {% endfor %}  
+                        <button id="select-projects-btn" name="Select Projects" type="submit">Select Projects</button>
+                    {% endif %}                    
+                </div>
+            </div>
+            <!--error message if nothing selected-->
+            {% if data.error_message == 1 %}  
+                <ul class="messages">
+                    <li>Please select a projects.</li>                    
+                </ul>
+            {% endif %}
+            <h3>-----------After projects selection------------</h3> 
+            <!--ADMIN header buttons-->
+            {% if user.is_staff == True %}
+                <!--display only if there is selected projects-->
+                {% if data.selected_excel_projects %}
+                    <ul>
+                        <label>Admin button:</label>
+                        <button type="submit" name="Delete selected projects data">Delete selected projects data</button>
+                    </ul>
+                {% endif %}
+            {% endif %}              
+            <!--USER and ADMIN header buttons-->
+            <!--display only if there is selected projects-->
+            {% if data.selected_excel_projects %}
+                <button type="submit" name="Get project Predict measurements according to selected projects data">Get project Predict measurements according to selected projects data</button>
+            {% endif %}   
+        </form>
+    </header>
+    <h1>-------------------------------</h1>
+    <h1>some historic data that selected to measure project predicts</h1>
+    <body>
+        <!--a table that shows the selected projects data
+        that got chosen in the choose field in the header section,
+        with a switch button to switch between the selected projects
+        -->
+        <!-- previous and next project buttons -->
+        <button id="previous-project-btn" onclick="showPreviousProject()">Previous Project</button>
+        <button id="next-project-btn" onclick="showNextProject()">Next Project</button>
+        
+        {% for selected_project in data.selected_excel_projects %}
+        <div class="selected-project" style="display: none;">
+            <!-- Hide project name -->
+            <h2>{{ forloop.counter }}: project name : {{ selected_project.project_name }}</h2>
+            <!-- Table for project data -->
+            <table class="selected-project-table">
+                <thead>
+                    <tr>
+                        <!-- Add a column for row index -->
+                        <th>#</th>
+                        <!-- Iterate over all fields of Excel_Row_Data to display headers -->
+                        {% for field, value in selected_project.excel_rows.first.json_data.items %}
+                            <th>{{ field }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for excel_row_data in selected_project.excel_rows.all %}
+                        <!-- Iterate over each row of Excel_Row_Data -->
+                        <tr>
+                            <!-- Show row index in the first column -->
+                            <td>{{ forloop.counter }}</td>
+                            <!-- Show each field value in a separate column -->
+                            {% for field, value  in excel_row_data.json_data.items %} 
+                                    <td>{{ value }}</td>
+                            {% endfor %}                
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+
+    </body> 
+
+    <!-- JavaScript to handle button clicks and control project visibility -->
+<!-- JavaScript to handle button clicks and control project visibility -->
+<script>
+    var currentProjectIndex = 0;  // Initialize current project index
+
+    function showPreviousProject() {
+        if (currentProjectIndex > 0) {
+            currentProjectIndex--;
+            updateProjectVisibility();
+        }
+    }
+
+    function showNextProject() {
+        if (currentProjectIndex < {{ data.selected_excel_projects|length }} - 1) {
+            currentProjectIndex++;
+            updateProjectVisibility();
+        }
+    }
+
+    function updateProjectVisibility() {
+        var projects = document.getElementsByClassName('selected-project');
+        for (var i = 0; i < projects.length; i++) {
+            projects[i].style.display = 'none';
+        }
+        projects[currentProjectIndex].style.display = 'block';
+    }
+
+    // Initially show the first project
+    updateProjectVisibility();
+</script>
+
+
+{% endblock %}
