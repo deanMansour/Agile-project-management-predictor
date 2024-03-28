@@ -1,0 +1,26 @@
+#select-project-btn {
+    /* Add your desired styles here */
+    background-color: #94c996; /* Green */
+    border: none;
+    color: white;
+    padding: 4px 13px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 10px;
+
+    /* Adjust the position */
+    position: absolute;
+    left: 9.8cm;
+}
+
+#select-project-btn:hover {
+    background-color: #45a049; /* Darker Green */
+}
+
+#select-project-btn:active {
+    background-color: #3e8e41; /* Darker Green */
+}
