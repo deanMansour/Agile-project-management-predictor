@@ -396,8 +396,7 @@ def overview(request):
     all_excel_projects = Excel_File_Data.objects.all() 
     selected_Projects_instance = Selected_Projects()
 
-    if selected_Projects_instance.selected_main_projectchosen_project_id:
-        data_to_render = {
+    data_to_render = {
         'display': "overview Page", 
         'all_projects': all_excel_projects,
         'chosen_project': selected_Projects_instance.selected_main_project,
@@ -406,4 +405,14 @@ def overview(request):
     return render(request, 'Predicting_app/overview.html', {'data':data_to_render, 'user': user_object})
 
 def measurements(request):
-    return render(request, 'Predicting_app/measurements.html')
+    user_object = request.user
+    all_excel_projects = Excel_File_Data.objects.all() 
+    selected_Projects_instance = Selected_Projects()
+
+    data_to_render = {
+        'display': "overview Page", 
+        'all_projects': all_excel_projects,
+        'chosen_project': selected_Projects_instance.selected_main_project,
+        }
+
+    return render(request, 'Predicting_app/measurements.html', {'data':data_to_render, 'user': user_object})
