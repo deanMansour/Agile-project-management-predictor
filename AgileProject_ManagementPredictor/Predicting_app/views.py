@@ -1,5 +1,6 @@
 #-------------------------
 from urllib import request
+from django import template
 from django.views import View
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -29,6 +30,7 @@ import io
 class Selected_Projects:
     selected_project_ids = []
     selected_excel_projects = []
+    selected_main_project = None
     
     def __init__(self, selected_project_ids=None):
         if selected_project_ids is None:
@@ -39,6 +41,7 @@ class Selected_Projects:
     def get_list_of_projects(self):
         #get list of selected projects instances
         return self.selected_excel_projects
+    
     
     def get_list_of_projects_id(self):
         return self.selected_project_ids
@@ -69,6 +72,11 @@ class Selected_Projects:
     def compute_DES(self):
         des_results_list = Compute_developer_expertise_score(self.selected_project_ids, self.selected_excel_projects)     
         return des_results_list
+    
+    def get_main_project(self,project):
+        selected_main_project=Excel_File_Data.objects.filter(id__in=project)
+        return selected_main_project
+
 #================================= 2 ===============================================
 class Upload_to_DB:    
     @staticmethod
@@ -160,8 +168,8 @@ class loging_page_view(View):
         
         form = AuthenticationForm()
         data_to_render = {'display': "Log-In Page"}
-        return render(request, 'Predicting_app/home_page.html', {'form': form, 'data':data_to_render })
-    #--------------------------------------------------------------------------------
+        return render(request, 'Predicting_app/home_page.html', {'form': form, 'data': data_to_render})
+    
     def post(self, request):
         if request.user.is_authenticated:
             return redirect('admin_MainPage_view_path')
@@ -179,36 +187,33 @@ class loging_page_view(View):
                 login(request, user_object)
                 if user_object.is_staff == True:
                     return redirect('admin_MainPage_view_path')
-                else:
-                    return redirect('user_MainPage_view_path')
+                else: #########--------------------this is where i change view path 
+                    return redirect('Dashboard')
             else:
                 # Add an error message to the form
                 form.add_error(None, 'Invalid username or password.')
-        else:
-            # Add an error message to the form
-            form.add_error(None, 'Invalid username or password.')
+        # If form is not valid or user authentication fails, render the login page again
+        return render(request, 'Predicting_app/home_page.html', {'form': form})
+
 #--------------------------------------------------------------------------------
 class signup_page_view(View):
     def get(self, request):
         form = User_SignUp_Form()
         data_to_render = {'display': "Sign-up Page"}
         return render(request, 'Predicting_app/home_page.html', {'form': form, 'data':data_to_render})
-    #--------------------------------------------------------------------------------
+
     def post(self, request):
         form = User_SignUp_Form(request.POST)
         if form.is_valid():
-            #form.save()-->save User_SignUp_Form class instance and return the instance of its linked model class
             user_object = form.save()
             user_object.refresh_from_db()
-            # save the new created model class instance that linked to User_SignUp_Form class
             user_object.save()
             return redirect('home_page_view_path')
         else:
-            form = User_SignUp_Form()
+            # Add error to non-field errors
             form.add_error(None, 'Invalid username or password.')
             data_to_render = {'display': "Sign-up Page"}
             return render(request, 'Predicting_app/home_page.html', {'form': form, 'data':data_to_render})
-
 #==========================Logged-In account Main Page views=====================
 #================================================================================
 class admin_MainPage_view(View):    
@@ -234,8 +239,11 @@ class admin_MainPage_view(View):
         error_message = None
         # if clicked on "Select Projects" button
         if 'Select Projects' in request.POST:
+            print('i clicked select projects')
             # Check if 'selected-project-ids' is in the request POST data--->if yes, then now some projects been selected
             if 'selected-project-ids' in request.POST:
+                print('i fount id projects')
+
                 # Retrieve selected project IDs from the request POST data
                 self.selected_Projects_instance.define_projects_by_ids_list(request.POST.getlist('selected-project-ids', []))
             else:
@@ -352,3 +360,62 @@ class user_measurement_page_view(View):
     #--------------------------------------------------------------------------------
     def post(self, request):
         return None
+
+
+def dashboard(request):
+        
+        all_excel_projects = Excel_File_Data.objects.all() 
+        user_object = request.user
+        chosen_project_id = request.GET.get('project-select')
+        selected_Projects_instance = Selected_Projects()
+        # Define the selected projects based on the chosen project ID
+        if chosen_project_id:
+            selected_Projects_instance.define_projects_by_ids_list([chosen_project_id])
+            try:
+             # Retrieve the corresponding project
+              chosen_project = all_excel_projects.get(pk=chosen_project_id)
+              selected_main_project = chosen_project  # Assign the chosen project to selected_main_project
+            except Excel_File_Data.DoesNotExist:
+              chosen_project = None
+              selected_main_project = None
+        else:
+           chosen_project = None
+           selected_main_project = None
+        
+        data_to_render = {
+        'display': "Dashboard Page", 
+        'all_projects': all_excel_projects,
+        'chosen_project': chosen_project,
+        'selected_main_project': selected_main_project
+        }
+    
+        return render(request, 'Predicting_app/Dashboard.html', {'data':data_to_render, 'user': user_object})
+             
+     
+
+
+def overview(request):
+    user_object = request.user
+    all_excel_projects = Excel_File_Data.objects.all() 
+    selected_Projects_instance = Selected_Projects()
+
+    data_to_render = {
+        'display': "overview Page", 
+        'all_projects': all_excel_projects,
+        'chosen_project': selected_Projects_instance.selected_main_project,
+        }
+
+    return render(request, 'Predicting_app/overview.html', {'data':data_to_render, 'user': user_object})
+
+def measurements(request):
+    user_object = request.user
+    all_excel_projects = Excel_File_Data.objects.all() 
+    selected_Projects_instance = Selected_Projects()
+
+    data_to_render = {
+        'display': "overview Page", 
+        'all_projects': all_excel_projects,
+        'chosen_project': selected_Projects_instance.selected_main_project,
+        }
+
+    return render(request, 'Predicting_app/measurements.html', {'data':data_to_render, 'user': user_object})
