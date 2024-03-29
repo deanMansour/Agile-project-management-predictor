@@ -79,15 +79,15 @@ If "get project Predict" button clicked then this page will transition to
             <div class="dropdown">
                 <div class="dropdown-content">
                     {% if data.selected_excel_projects %}
-                        {% for project in data.selected_excel_projects %}
-                            <label>{{ forloop.counter }}:<input type="checkbox" name="selected-projects" id="selected-projects" value="{{ project.id }}" checked> {{ project.project_name }}</label>
-                        {% endfor %}
-                        <button id="unselect-btn" name="Unselect Projects" type="submit">Unselect Projects</button>
+                       {% for project in data.selected_excel_projects %}
+                       <label>{{ forloop.counter }}:<input type="checkbox" name="selected-projects" id="selected-projects" value="{{ project.id }}" checked> {{ project.project_name }}</label>
+                       {% endfor %}
+                       <button id="unselect-btn" name="Unselect Projects" type="submit">Unselect Projects</button>
                     {% else %}
-                        {% for project in data.all_projects %}
-                            <label>{{ forloop.counter }}:<input type="checkbox" name="selected-project-ids" id="selected-project-ids" value="{{ project.id }}"> {{ project.project_name }}</label> 
-                        {% endfor %}  
-                        <button id="select-projects-btn" name="Select Projects" type="submit">Select Projects</button>
+                       {% for project in data.all_projects %}
+                       <label>{{ forloop.counter }}:<input type="checkbox" name="selected-projects" id="selected-projects" value="{{ project.id }}"> {{ project.project_name }}</label> 
+                       {% endfor %}  
+                       <button id="select-projects-btn" name="Select Projects" type="submit">Select Projects</button>
                     {% endif %}                    
                 </div>
             </div>
