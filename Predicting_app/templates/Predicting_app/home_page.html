@@ -23,7 +23,7 @@
                     {% if user.is_staff == True %}
                         <h1><a href="{% url "admin_MainPage_view_path" %}"> Admin MainPage</a></h1>
                     {% else %}
-                        <h1><a href="{% url "user_MainPage_view_path" %}"> ToU ser MainPage</a></h1>
+                        <h1><a href="{% url "Dashboard" %}"> User MainPage</a></h1>
                     {% endif %}
 
                 {% else %}

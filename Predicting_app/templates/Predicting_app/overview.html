@@ -1,7 +1,12 @@
 <h2>overview</h2>
 {% if data.chosen_project %}
 <div>
-    <h2>{{ data.chosen_project.project_name}}</h2>
+    <h3>All Tasks</h3>
+    <ul>
+       <!-- {% for row_data in data.selected_main_project.excel_rows.all %}
+            <li>{{ row_data.project_name }}</li>
+        {% endfor %}-->
+    </ul>
 </div>
 
 {% endif %}

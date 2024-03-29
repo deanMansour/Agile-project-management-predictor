@@ -239,8 +239,11 @@ class admin_MainPage_view(View):
         error_message = None
         # if clicked on "Select Projects" button
         if 'Select Projects' in request.POST:
+            print('i clicked select projects')
             # Check if 'selected-project-ids' is in the request POST data--->if yes, then now some projects been selected
             if 'selected-project-ids' in request.POST:
+                print('i fount id projects')
+
                 # Retrieve selected project IDs from the request POST data
                 self.selected_Projects_instance.define_projects_by_ids_list(request.POST.getlist('selected-project-ids', []))
             else:
