@@ -5,6 +5,11 @@ urlpatterns = [
     # path('<sending parameter>', views.home, name='home')   <> used to send parameter
     path('', views.home_page_view.as_view(), name='home_page_view_path'),    
     #--------------------------------------------------------------------------------
+    path('Dashboard/', views.dashboard, name='Dashboard'),    
+
+    path('Dashboard/overview.html', views.overview, name='overview'),  # Using the same view function as Dashboard
+    path('Dashboard/measurements.html', views.measurements, name='measurements'),
+    #--------------------------------------------------------------------------------
     path('login/', views.loging_page_view.as_view(), name='loging_page_view_path'),
     #--------------------------------------------------------------------------------
     path('signup/', views.signup_page_view.as_view(), name='signup_page_view_path'),

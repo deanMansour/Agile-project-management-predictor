@@ -48,7 +48,7 @@ class Excel_Row_Data(models.Model):
 class Excel_File_Data(models.Model):
     excel_rows = models.ManyToManyField(Excel_Row_Data) # Many-to-Many relationship becuase we could make copy of the excel file
     project_name = models.CharField(max_length=255)   
-   
+
     def aggregate_rows(self):
         all_rows = self.excel_rows.all()
         # Combine all rows into a single dictionary

@@ -20,7 +20,7 @@ If "get project Predict" button clicked then this page will transition to
                 cursor: pointer;
               }
               
-              <!-- Style the dropdown content (hidden by default) */ -->
+              <!-- Style the dropdown content (hidden by default)  -->
               .dropdown-content {
                 display: none;
                 position: absolute;
@@ -59,7 +59,7 @@ If "get project Predict" button clicked then this page will transition to
         <form action="" method="POST" enctype="multipart/form-data" id="main-form">
             {% csrf_token %}
             <!-- activate views by path name -->            
-            <h1><a href="{% url "logout_page_view_path" %}"> To Log Out</a></h1>
+            <h1><a href="{% url "logout_page_view_path" %}"> Log Out</a></h1>
             <!--ADMIN header buttons-->
             {% if user.is_staff == True %}
                 <h3>-----------Admin Files Uploading------------</h3>                
@@ -79,15 +79,15 @@ If "get project Predict" button clicked then this page will transition to
             <div class="dropdown">
                 <div class="dropdown-content">
                     {% if data.selected_excel_projects %}
-                        {% for project in data.selected_excel_projects %}
-                            <label>{{ forloop.counter }}:<input type="checkbox" name="selected-projects" id="selected-projects" value="{{ project.id }}" checked> {{ project.project_name }}</label>
-                        {% endfor %}
-                        <button id="unselect-btn" name="Unselect Projects" type="submit">Unselect Projects</button>
+                       {% for project in data.selected_excel_projects %}
+                       <label>{{ forloop.counter }}:<input type="checkbox" name="selected-projects" id="selected-projects" value="{{ project.id }}" checked> {{ project.project_name }}</label>
+                       {% endfor %}
+                       <button id="unselect-btn" name="Unselect Projects" type="submit">Unselect Projects</button>
                     {% else %}
-                        {% for project in data.all_projects %}
-                            <label>{{ forloop.counter }}:<input type="checkbox" name="selected-project-ids" id="selected-project-ids" value="{{ project.id }}"> {{ project.project_name }}</label> 
-                        {% endfor %}  
-                        <button id="select-projects-btn" name="Select Projects" type="submit">Select Projects</button>
+                       {% for project in data.all_projects %}
+                       <label>{{ forloop.counter }}:<input type="checkbox" name="selected-projects" id="selected-projects" value="{{ project.id }}"> {{ project.project_name }}</label> 
+                       {% endfor %}  
+                       <button id="select-projects-btn" name="Select Projects" type="submit">Select Projects</button>
                     {% endif %}                    
                 </div>
             </div>
