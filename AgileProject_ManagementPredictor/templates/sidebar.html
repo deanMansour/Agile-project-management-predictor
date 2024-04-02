@@ -1,22 +1,26 @@
 <div class="d-flex">
     <!-- Sidebar -->
     <div class="d-flex flex-column flex-shrink-0 p-3 text-bg-dark" style="width: 280px; height: 100vh;">
-        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-            <svg class="bi pe-none me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
-            <span class="fs-4" style="font-size: 40; font-weight: bold;"> Insights </span>
+        <a href="/" class="btn btn-primary mb-3 text-white">
+            <svg class="bi pe-none me-2" width="0" height="32"><use xlink:href="#bootstrap"/></svg>
+            <span class="fs-4" style="font-size: 20px;">Home Page</span>
         </a>
-        
+        <a href="{% url 'Dashboard_path' %}" class="text-white text-decoration-none">
+            <span class="fs-4" style="font-size: 20px; font-weight: bold;"> Insights </span>
+        </a>
         <hr>
         <ul class="nav nav-pills flex-column mb-auto">
-            <form action="{% url 'Dashboard' %}" method="get">
-                <select name="project-select" id="id_project" style="width: 200px; height: 28px;">
+            <form action="" method="POST">
+                {% csrf_token %}
+                <select name="selected-project" id="id_project" style="width: 200px; height: 28px;">
                     <option value="">Select Project</option>
                     {% for project in data.all_projects %}
                         <option value="{{ project.id }}">{{ project.project_name }}</option>
                     {% endfor %}
                 </select>
-                <button type="submit">Select Project</button>
+                <button name="Select_Project" type="submit">Select Project</button>
             </form>
+            
             <!--{% if user.is_staff == True %}
             <li class="nav-item">
                 <a href="#" class="nav-link active" aria-current="page" onclick="showAdminEditor()">
@@ -26,13 +30,13 @@
             </li>
             {% endif %}-->
             <li class="nav-item">
-                <a href="#" class="nav-link text-white" aria-current="page" onclick="showOverview()" style="font-size: 20px;">
+                <a href="#" class="nav-link text-white" aria-current="page" onclick="showOverview({{ data.dashboard_project.id }})" style="font-size: 20px;">
                     <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#home"/></svg>
                     Overview
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#" class="nav-link text-white " onclick="showMeasurements()" style="font-size: 20px; ">
+                <a href="#" class="nav-link text-white " onclick="showMeasurements({{ data.dashboard_project.id }})" style="font-size: 20px; ">
                     <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#speedometer2"/></svg>
                     Measurements
                 </a>
@@ -59,8 +63,8 @@
 </div>
 
 <script>
-    function showOverview() {
-        fetch('overview.html')
+    function showOverview(projectId) {
+        fetch(`overview/${projectId}/`)
             .then(response => response.text())
             .then(data => {
                 document.getElementById("overview-content").innerHTML = data;
@@ -69,15 +73,14 @@
             })
             .catch(error => console.error('Error fetching overview:', error));
     }
-
-    function showMeasurements() {
-        fetch('measurements.html')
+    
+    function showMeasurements(projectId) {
+        fetch(`measurements/${projectId}/`)
             .then(response => response.text())
             .then(data => {
                 document.getElementById("measurements-content").innerHTML = data;
                 document.getElementById("overview-content").innerHTML = ''; // Clear the other content
                 document.getElementById("admin-content").innerHTML= ''
-
             })
             .catch(error => console.error('Error fetching measurements:', error));
     }

@@ -1,12 +1,33 @@
 <h2>overview</h2>
-{% if data.chosen_project %}
+{% if data.dashboard_project %}
 <div>
     <h3>All Tasks</h3>
-    <ul>
-       <!-- {% for row_data in data.selected_main_project.excel_rows.all %}
-            <li>{{ row_data.project_name }}</li>
-        {% endfor %}-->
-    </ul>
+    <!-- Table for project data -->
+    <table class="selected-project-table">
+        <thead>
+            <tr>
+                <!-- Add a column for row index -->
+                <th>#</th>
+                <!-- Iterate over all fields of Excel_Row_Data to display headers -->
+                {% for field, value in data.dashboard_project.excel_rows.first.json_data.items %}
+                    <th>{{ field }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for excel_row_data in data.dashboard_project.excel_rows.all %}
+                <!-- Iterate over each row of Excel_Row_Data -->
+                <tr>
+                    <!-- Show row index in the first column -->
+                    <td>{{ forloop.counter }}</td>
+                    <!-- Show each field value in a separate column -->
+                    {% for field, value  in excel_row_data.json_data.items %} 
+                            <td>{{ value }}</td>
+                    {% endfor %}                
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 {% endif %}
