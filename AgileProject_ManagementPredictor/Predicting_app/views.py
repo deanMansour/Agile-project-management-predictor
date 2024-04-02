@@ -400,6 +400,7 @@ class dashboard(View):
             selected_project_id = request.POST.get('selected-project')
             if selected_project_id:
                 self.selected_Projects_instance.set_dashboard_project_by_id(selected_project_id)
+                results = {'DES' : self.selected_Projects_instance.dashboard_compute_DES()} # return dict of DES results{}
             else :
                 self.selected_Projects_instance = Selected_Projects()
 
@@ -411,6 +412,7 @@ class dashboard(View):
             'selected_Projects_instance':self.selected_Projects_instance,
             'dashboard_project_id': self.selected_Projects_instance.get_dashboard_project_id(),
             'dashboard_project': self.selected_Projects_instance.get_dashboard_project(),
+            'results' : results,
         }
 
         return render(request, 'Predicting_app/Dashboard.html', {'data': data_to_render, 'user': user_object})
@@ -436,16 +438,10 @@ def measurements_page(request, project_id):
 
     if project_id:
         selected_Projects_instance.set_dashboard_project_by_id(project_id)
-        results = selected_Projects_instance.dashboard_compute_DES() # return dict of DES results
-        
-        result1 = results.get('priority_weighted_fixed_issues', {})
-        result2 = results.get('versatility_and_breadth_index', {})
-        result3 = results.get('developer_average_bug_fixing_time', {})
-        
+        results = {'DES' : selected_Projects_instance.dashboard_compute_DES()} # return dict of DES results{}
+
         # # Debug print
-        # print(result1)
-        # print(result2)
-        # print(result3)
+        # print(result)
 
     all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
     user_object = request.user     
@@ -455,9 +451,7 @@ def measurements_page(request, project_id):
         'selected_Projects_instance': selected_Projects_instance,
         'dashboard_project_id': selected_Projects_instance.get_dashboard_project_id(),
         'dashboard_project': selected_Projects_instance.get_dashboard_project(),
-        'result1' : result1,
-        'result2' : result2,
-        'result3' : result3,    
+        'results' : results,
     }
     
     return render(request, 'Predicting_app/measurements.html', {'data': data_to_render, 'user': user_object})
