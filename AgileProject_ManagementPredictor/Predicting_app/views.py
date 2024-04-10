@@ -1,5 +1,6 @@
 #-------------------------
 from urllib import request
+from django import template
 from django.views import View
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -27,49 +28,150 @@ import io
 #============================Support Classes=====================================
 #================================= 1 ===============================================
 class Selected_Projects:
-    selected_project_ids = []
-    selected_excel_projects = []
-    
-    def __init__(self, selected_project_ids=None):
-        if selected_project_ids is None:
-            selected_project_ids = []
-        self.selected_project_ids = selected_project_ids
-        self.selected_excel_projects = Excel_File_Data.objects.filter(id__in=self.selected_project_ids)
+    # the attributes recommended to be private(to set it only through methods)
+    def __init__(self, selected_project_ids=None, dashboard_project_id=None):
+        self._selected_project_ids = []  # Private attribute
+        self._selected_excel_projects = []  # Private attribute
+        self._dashboard_project_id = None  # Private attribute
+        self._dashboard_project = None  # Private attribute
 
-    def get_list_of_projects(self):
-        #get list of selected projects instances
-        return self.selected_excel_projects
+        if selected_project_ids:
+            self.set_projects_by_ids_list(selected_project_ids)
+
+        if dashboard_project_id:
+            self.set_dashboard_project_by_id(dashboard_project_id)
+                
+                #----selected projects list methods-----
     
-    def get_list_of_projects_id(self):
-        return self.selected_project_ids
+    def set_projects_by_ids_list(self, project_ids_list):
+        self._selected_project_ids = project_ids_list
+        self._selected_excel_projects = Excel_File_Data.objects.filter(id__in=self._selected_project_ids)
     
-    def define_projects_by_ids_list(self, project_ids_list):
-        self.selected_project_ids = project_ids_list
-        self.selected_excel_projects = Excel_File_Data.objects.filter(id__in=self.selected_project_ids)
+    def get_selected_projects_list(self):
+        return self._selected_excel_projects
+    
+    def get_selected_projects_ids_list(self):
+        return self._selected_project_ids
 
     def unselect(self):
-        self.selected_project_ids = []
-        self.selected_excel_projects = []
+        self._selected_project_ids = []
+        self._selected_excel_projects = []
 
     def is_selected(self):
         # Return True if there are selected projects
-        return bool(self.selected_excel_projects)
+        return bool(self._selected_excel_projects)
 
     def delete_selected_projects(self):
         # Loop through each selected project and delete it along with its associated rows
-        for project in self.selected_excel_projects:
+        for project in self._selected_excel_projects:
             # Delete associated rows first
             project.excel_rows.all().delete()
             # Remove the project from the list of selected projects
-            self.selected_project_ids.remove(project.id)
-            self.selected_excel_projects.remove(project)
+            self._selected_project_ids.remove(project.id)
+            self._selected_excel_projects.remove(project)
             # Now delete the project itself
             project.delete()
 
-    def compute_DES(self):
-        des_results_list = Compute_developer_expertise_score(self.selected_project_ids, self.selected_excel_projects)     
+                #----Dashboard project methods-----
+    
+    def set_dashboard_project_by_id(self, project_id):
+        self._dashboard_project_id = project_id
+        self._dashboard_project = Excel_File_Data.objects.filter(id=self._dashboard_project_id).first()
+    
+    def get_dashboard_project(self):
+        return self._dashboard_project
+
+    def get_dashboard_project_id(self):
+        return self._dashboard_project_id
+    
+    def unselect_dashboard_project(self):        
+        self._dashboard_project_id = None
+        self._dashboard_project = None
+
+    def is_dashboard_selected(self):
+        # Return True if there is dashboard project
+        return bool(self._dashboard_project)
+
+    def dashboard_compute_DES(self):
+        excel_rows = self._dashboard_project.excel_rows.all()
+        developers_name_list = [excel_row.json_data.get("Assignee", "").lower() for excel_row in excel_rows]
+        des_results_list = {
+            'priority_weighted_fixed_issues' : Compute_Developer_Expertise_Score.priority_weighted_fixed_issues(self._dashboard_project, excel_rows, developers_name_list),
+            'versatility_and_breadth_index' : Compute_Developer_Expertise_Score.versatility_and_breadth_index(self._dashboard_project),
+            'developer_average_bug_fixing_time' : Compute_Developer_Expertise_Score.developer_average_bug_fixing_time(self._dashboard_project, excel_rows, developers_name_list),
+        }    
         return des_results_list
 #================================= 2 ===============================================
+class Compute_Developer_Expertise_Score:
+    @staticmethod
+    def priority_weighted_fixed_issues(dashboard_project, excel_rows, developers_name_list):
+        priorities_list = [excel_row.json_data.get("Priority", "").lower() for excel_row in excel_rows]      
+        same_priority_bugs_count_fixed_by_developer = {developer_name: {priority: 0 for priority in priorities_list} for developer_name in developers_name_list}
+        same_priority_total_count = {priority: 0 for priority in priorities_list}        
+        # Initialize dictionary to store the developer names as keys and and each priority compute result as value  
+        priority_weighted_fixed_results_dict = {developer_name: {priority: 0 for priority in priorities_list} for developer_name in developers_name_list}
+
+        # Iterate over all Excel rows to count bugs fixed by priority and developer
+        for excel_row in excel_rows:
+            issue_type = excel_row.json_data.get("Issue Type", "").lower()
+            developer_name = excel_row.json_data.get("Assignee", "").lower()
+            priority = excel_row.json_data.get("Priority", "").lower() 
+            
+            # Check if the issue is a bug 
+            if issue_type == "Bug".lower():
+                # Increment total bugs with same priority count
+                if priority in priorities_list:
+                    same_priority_total_count[priority] += 1
+                
+                # Increment priority count for the developer
+                if developer_name in developers_name_list:
+                    same_priority_bugs_count_fixed_by_developer[developer_name][priority] += 1
+
+        # Calculate the weighted priority dict for each developer
+        weight = 0
+        for developer_name in developers_name_list:   
+            for priority, count_of_bugs_with_same_priority_fixed_by_developer in same_priority_bugs_count_fixed_by_developer[developer_name].items():
+                if same_priority_total_count[priority] > 0:
+
+                    weight = count_of_bugs_with_same_priority_fixed_by_developer / same_priority_total_count[priority]
+                    priority_weighted_fixed_results_dict[developer_name][priority] = weight
+            
+            else:
+                priority_weighted_fixed_results_dict[developer_name][priority] = 0
+        
+        return priority_weighted_fixed_results_dict
+    #--------------------------------------------------------------------------------
+    @staticmethod
+    def versatility_and_breadth_index(dashboard_project):
+        return None
+    #--------------------------------------------------------------------------------
+    @staticmethod
+    def developer_average_bug_fixing_time(dashboard_project, excel_rows, developers_name_list):
+        total_time_spent_by_developer = {developer_name: 0 for developer_name in developers_name_list}
+        count_of_bugs_fixed_by_developer = {developer_name: 0 for developer_name in developers_name_list}        
+        developer_average_bug_fixing_time_results_dict = {developer_name: 0 for developer_name in developers_name_list}
+        
+        # Iterate over all Excel rows to count bugs fixed by each developer and count total time spent to fix bugs by each developer
+        for excel_row in excel_rows:
+            issue_type = excel_row.json_data.get("Issue Type", "").lower()
+            developer_name = excel_row.json_data.get("Assignee", "").lower()
+            time_spent_str = excel_row.json_data.get("Time Spent", "")
+            time_spent = int(time_spent_str) if time_spent_str.isdigit() else 0
+            
+            # Check if the issue is a bug and Increment priority count
+            if issue_type == "Bug".lower():
+                # Increment priority count for the developer
+                if developer_name in developers_name_list:
+                    total_time_spent_by_developer[developer_name] += time_spent
+                    count_of_bugs_fixed_by_developer[developer_name] += 1
+            
+        # Calculate the developer average bug fixing time
+        for developer_name in developers_name_list:
+            if count_of_bugs_fixed_by_developer[developer_name] > 0:
+                developer_average_bug_fixing_time_results_dict[developer_name] = total_time_spent_by_developer[developer_name] / count_of_bugs_fixed_by_developer[developer_name]
+        
+        return developer_average_bug_fixing_time_results_dict
+#================================= 3 ===============================================
 class Upload_to_DB:    
     @staticmethod
     def csv_file(request):
@@ -130,9 +232,6 @@ class Upload_to_DB:
                 break  # Exit the loop after setting the project name
         excel_file_DB_instance.excel_rows.add(*excel_rows_data_instances)
         return excel_file_DB_instance
-#================================= 3 ===============================================
-class Compute_developer_expertise_score:
-    attribute = None
 
 #================================Home Page views=================================
 #================================================================================
@@ -160,8 +259,8 @@ class loging_page_view(View):
         
         form = AuthenticationForm()
         data_to_render = {'display': "Log-In Page"}
-        return render(request, 'Predicting_app/home_page.html', {'form': form, 'data':data_to_render })
-    #--------------------------------------------------------------------------------
+        return render(request, 'Predicting_app/home_page.html', {'form': form, 'data': data_to_render})
+    
     def post(self, request):
         if request.user.is_authenticated:
             return redirect('admin_MainPage_view_path')
@@ -179,35 +278,33 @@ class loging_page_view(View):
                 login(request, user_object)
                 if user_object.is_staff == True:
                     return redirect('admin_MainPage_view_path')
-                else:
-                    return redirect('user_MainPage_view_path')
+                else: #########--------------------this is where i change view path 
+                    return redirect('Dashboard_path')
             else:
                 # Add an error message to the form
                 form.add_error(None, 'Invalid username or password.')
-        else:
-            # Add an error message to the form
-            form.add_error(None, 'Invalid username or password.')
+        # If form is not valid or user authentication fails, render the login page again
+        return render(request, 'Predicting_app/home_page.html', {'form': form})
+
 #--------------------------------------------------------------------------------
 class signup_page_view(View):
     def get(self, request):
         form = User_SignUp_Form()
         data_to_render = {'display': "Sign-up Page"}
         return render(request, 'Predicting_app/home_page.html', {'form': form, 'data':data_to_render})
-    #--------------------------------------------------------------------------------
+
     def post(self, request):
         form = User_SignUp_Form(request.POST)
         if form.is_valid():
-            #form.save()-->save User_SignUp_Form class instance and return the instance of its linked model class
             user_object = form.save()
             user_object.refresh_from_db()
-            # save the new created model class instance that linked to User_SignUp_Form class
             user_object.save()
             return redirect('home_page_view_path')
         else:
+            # Add error to non-field errors
             form.add_error(None, 'Invalid username or password.')
             data_to_render = {'display': "Sign-up Page"}
             return render(request, 'Predicting_app/home_page.html', {'form': form, 'data':data_to_render})
-
 #==========================Logged-In account Main Page views=====================
 #================================================================================
 class admin_MainPage_view(View):    
@@ -216,15 +313,17 @@ class admin_MainPage_view(View):
     
     @method_decorator(login_required)
     def get(self, request):
+        self.selected_Projects_instance = Selected_Projects()
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files
         user_object = request.user
         data_to_render = {
             'display': "Admin Main Page", 
             'all_projects': all_excel_projects, 
-            'selected_excel_projects': self.selected_Projects_instance.get_list_of_projects(),
+            'selected_excel_projects': self.selected_Projects_instance.get_selected_projects_list(),
             'selected_Projects_instance':self.selected_Projects_instance,        }      
-        return render(request, 'Predicting_app/admin_OR_user_MainPage.html', {'data':data_to_render, 'user':user_object})
+        return render(request, 'Predicting_app/admin_MainPage.html', {'data':data_to_render, 'user':user_object})
     #--------------------------------------------------------------------------------
+    @method_decorator(login_required)
     def post(self, request):
         #if clicked on unselect button
         if 'Unselect Projects' in request.POST:
@@ -233,10 +332,13 @@ class admin_MainPage_view(View):
         error_message = None
         # if clicked on "Select Projects" button
         if 'Select Projects' in request.POST:
-            # Check if 'selected-project-ids' is in the request POST data--->if yes, then now some projects been selected
-            if 'selected-project-ids' in request.POST:
+            print('i clicked select projects')
+            # Check if selected project ids is in the request POST data--->if yes, then now some projects been selected
+            if 'selected-projects' in request.POST:
+                print('i fount id projects')
+
                 # Retrieve selected project IDs from the request POST data
-                self.selected_Projects_instance.define_projects_by_ids_list(request.POST.getlist('selected-project-ids', []))
+                self.selected_Projects_instance.set_projects_by_ids_list(request.POST.getlist('selected-projects', []))
             else:
                 error_message = 1 # Add an error message
             
@@ -263,91 +365,93 @@ class admin_MainPage_view(View):
         data_to_render = {
             'display': "Admin Main Page",
             'all_projects': all_excel_projects,
-            'selected_excel_projects': self.selected_Projects_instance.get_list_of_projects(),
+            'selected_excel_projects': self.selected_Projects_instance.get_selected_projects_list(),
             'selected_Projects_instance':self.selected_Projects_instance,
             'error_message': error_message
         }
-        # if clicked on "Get project Predict measurements according to selected projects data" button
-        #(its shown in template only if there is selected project)
-        if 'Get project Predict measurements according to selected projects data' in request.POST:
-            return render(request, 'Predicting_app/admin_OR_user_measurementPage.html', {'data': data_to_render, 'user': user_object}) 
-        return render(request, 'Predicting_app/admin_OR_user_MainPage.html', {'data': data_to_render, 'user': user_object}) 
+        # if clicked on "View Dashboard" button
+        if 'View Dashboard' in request.POST:
+            return redirect('Dashboard_path')
+        return render(request, 'Predicting_app/admin_MainPage.html', {'data': data_to_render, 'user': user_object})
 
-#================================================================================ 
-class user_MainPage_view(View):
-    @method_decorator(login_required)
-    def get(self, request):
-        # request.user--> returns the authenticated User class object    
-        self.selected_excel_projects = []
-        all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files
-        user_object = request.user
-        data_to_render = {
-            'display': "User Main Page", 'all_projects': all_excel_projects, 
-            'selected_excel_projects': self.selected_excel_projects
-        }
-        
-        return render(request, 'Predicting_app/admin_OR_user_MainPage.html', {'data':data_to_render, 'user':user_object})
-    #--------------------------------------------------------------------------------
-    def post(self, request):
-        
-        def compute_predicts():
-            return redirect('user_measurement_pageview_path')
-        #----------------------
-        self.selected_excel_projects = []
-
-        # if clicked on "Select Projects" button
-        if 'Select Projects' in request.POST:
-            self.selected_project_ids = request.POST.getlist('selected-projects')
-            self.selected_excel_projects = Excel_File_Data.objects.filter(id__in=self.selected_project_ids)# Retrieve selected excel projects from the database
-
-        if 'Get project Predict measurements according to selected projects data' in request.POST:
-            self.selected_project_ids = request.POST.getlist('selected-projects')
-            self.selected_excel_projects = Excel_File_Data.objects.filter(id__in=self.selected_project_ids)# Retrieve selected excel projects from the database
-            compute_predicts()
-        #--------------------------------------------------------------------------------        
-        all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
-        user_object = request.user        
-        data_to_render = {
-            'display': "Admin Main Page", 'all_projects': all_excel_projects,
-            'selected_excel_projects': self.selected_excel_projects
-        }
-        
-        return render(request, 'Predicting_app/admin_OR_user_MainPage.html', {'data': data_to_render, 'user': user_object}) 
-
-#======================Logged-In account Measurement page views==================
+#===========================Logged-In account Dashboard==========================
 #================================================================================
-class admin_measurement_page_view(View):
+class dashboard(View):
     selected_Projects_instance = Selected_Projects()
-    
+
     @method_decorator(login_required)
     def get(self, request):
-        return None     #   will never be accessed--becuase template got activated from another class
-    #--------------------------------------------------------------------------------
-    def post(self, request):        
-        self.selected_Projects_instance = request.POST('selected_Projects')
-
-        # if clicked on any of compute buttons
-        if 'compute_DES' in request.POST:
-            des_results_list = self.selected_Projects_instance.compute_DES()
-
-        pridict_compute_results_dict = {'des' : des_results_list}
-        form = []
+        self.selected_Projects_instance = Selected_Projects()
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
         user_object = request.user        
         data_to_render = {
-            'display': "Admin Measurement Page",
+            'display': "Dashboard Page",
             'all_projects': all_excel_projects,
-            'selected_excel_projects': self.selected_Projects_instance.get_list_of_projects(),
             'selected_Projects_instance':self.selected_Projects_instance,
-            'result': pridict_compute_results_dict
-        }        
-        return render(request, 'Predicting_app/admin_OR_user_measurementPage.html', {'data': data_to_render, 'user': user_object, 'form': form})
-#================================================================================
-class user_measurement_page_view(View):
-    @method_decorator(login_required)
-    def get(self, request):
-        data_to_render = {'display': "User Measurement Page"}
-        return render(request, 'Predicting_app/admin_OR_user_measurementPage.html', {'data':data_to_render})
+            'dashboard_project': self.selected_Projects_instance.get_dashboard_project(),
+        }
+        return render(request, 'Predicting_app/Dashboard.html', {'data': data_to_render, 'user': user_object})
+
     #--------------------------------------------------------------------------------
-    def post(self, request):
-        return None
+    @method_decorator(login_required)
+    def post(self, request):        
+        # if clicked in "Select Project" button
+        if 'Select_Project' in request.POST:            
+            selected_project_id = request.POST.get('selected-project')
+            if selected_project_id:
+                self.selected_Projects_instance.set_dashboard_project_by_id(selected_project_id)
+                results = {'DES' : self.selected_Projects_instance.dashboard_compute_DES()} # return dict of DES results{}
+            else :
+                self.selected_Projects_instance = Selected_Projects()
+
+        all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
+        user_object = request.user        
+        data_to_render = {
+            'display': "Dashboard Page",
+            'all_projects': all_excel_projects,
+            'selected_Projects_instance':self.selected_Projects_instance,
+            'dashboard_project_id': self.selected_Projects_instance.get_dashboard_project_id(),
+            'dashboard_project': self.selected_Projects_instance.get_dashboard_project(),
+            'results' : results,
+        }
+
+        return render(request, 'Predicting_app/Dashboard.html', {'data': data_to_render, 'user': user_object})
+#--------------------------------------------------------------------------------
+def overview_page(request, project_id):
+    selected_Projects_instance = Selected_Projects()
+    selected_Projects_instance.set_dashboard_project_by_id(project_id)
+
+    all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
+    user_object = request.user     
+    data_to_render = {
+        'display': "Overview Page",
+        'all_projects': all_excel_projects,
+        'selected_Projects_instance': selected_Projects_instance,
+        'dashboard_project_id': selected_Projects_instance.get_dashboard_project_id(),
+        'dashboard_project': selected_Projects_instance.get_dashboard_project(),
+    }
+    return render(request, 'Predicting_app/overview.html', {'data': data_to_render, 'user': user_object})
+#--------------------------------------------------------------------------------
+def measurements_page(request, project_id):
+    selected_Projects_instance = Selected_Projects()
+    results = {}
+
+    if project_id:
+        selected_Projects_instance.set_dashboard_project_by_id(project_id)
+        results = {'DES' : selected_Projects_instance.dashboard_compute_DES()} # return dict of DES results{}
+
+        # # Debug print
+        # print(result)
+
+    all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
+    user_object = request.user     
+    data_to_render = {
+        'display': "Measurements Page",
+        'all_projects': all_excel_projects,
+        'selected_Projects_instance': selected_Projects_instance,
+        'dashboard_project_id': selected_Projects_instance.get_dashboard_project_id(),
+        'dashboard_project': selected_Projects_instance.get_dashboard_project(),
+        'results' : results,
+    }
+    
+    return render(request, 'Predicting_app/measurements.html', {'data': data_to_render, 'user': user_object})

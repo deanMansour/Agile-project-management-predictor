@@ -1,0 +1,61 @@
+<style>
+    /* Styles for the tables */
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .result-table th,
+    .result-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    .result-table th {
+      background-color: #f2f2f2;
+    }
+  </style>
+  
+  <h2>Priority Weighted Fixed Issues:</h2>
+  <h5>Count of bugs with same priority fixed by developer / Same priority total count</h5>
+  <table class="result-table">
+    <tr>
+      <th>Developer Name</th>
+      <th>Priority</th>
+      <th>Weight</th>
+    </tr>
+    {% for developer_name, priorities in data.results.DES.priority_weighted_fixed_issues.items %}
+      <tr>
+        <td rowspan="{{ priorities|length }}">{{ developer_name }}</td>
+        {% for priority, weight in priorities.items %}
+        {% if forloop.first %}
+        <td>{{ priority }}</td>
+        <td>{{ weight }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td>{{ priority }}</td>
+          <td>{{ weight }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    {% endfor %}
+  </table>
+  <h3>----------------------------------------------------------------------</h3> 
+  <h2>Versatility and Breadth Index: <span class="versatility-index">{{ data.results.DES.versatility_and_breadth_index }}</span></h2>
+  <h3>----------------------------------------------------------------------</h3> 
+  <h2>Developer Average Bug Fixing Time:</h2>
+  <h5>Total time spent by developer / Count of bugs fixed by developer</h5>
+  <table class="result-table">
+    <tr>
+      <th>Developer Name</th>
+      <th>Average Time</th>
+    </tr>
+    {% for developer_name, avg_time in data.results.DES.developer_average_bug_fixing_time.items %}
+    <tr>
+      <td>{{ developer_name }}</td>
+      <td>{{ avg_time }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  

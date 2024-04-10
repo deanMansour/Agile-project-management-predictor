@@ -6,7 +6,7 @@
         It Also includes some homePage contens(like about The developers of the site"Us").
     -->
 {% block content %}    
-<section>
+    <section>
         <header>
             <link href="{% static 'Predicting_app/loginStyle.css' %}" rel="stylesheet">
             {% if user.is_authenticated %}
@@ -19,35 +19,35 @@
                 {% csrf_token %}       
                 {% if user.is_authenticated %}
                     <!-- activate views by path name -->            
-                    <h1><a href="{% url "logout_page_view_path" %} " style="text-decoration: none; color: antiquewhite;"> Log Out</a></h1>
+                    <h1><a href="{% url "logout_page_view_path" %}"> Log Out</a></h1>
                     {% if user.is_staff == True %}
-                        <h1><a href="{% url "admin_MainPage_view_path" %} " style="text-decoration: none; color: antiquewhite;"> Admin MainPage</a></h1>
+                        <h1><a href="{% url "admin_MainPage_view_path" %}"> Admin MainPage</a></h1>
                     {% else %}
-                        <h1><a href="{% url "user_MainPage_view_path" %} " style="text-decoration: none; color: antiquewhite;"> User MainPage</a></h1>
+                        <h1><a href="{% url "Dashboard_path" %}"> User MainPage</a></h1>
                     {% endif %}
 
                 {% else %}
-                    <h1><a href="{% url "loging_page_view_path" %} " style="text-decoration: none; color: antiquewhite;"> Log in</a></h1>
-                    <h1><a href="{% url "signup_page_view_path" %} " style="text-decoration: none; color: antiquewhite;"> sign up</a></h1>
+                <h1><a href="{% url "loging_page_view_path" %} " style="text-decoration: none; color: antiquewhite;"> Log in</a></h1>
+                <h1><a href="{% url "signup_page_view_path" %} " style="text-decoration: none; color: antiquewhite;"> sign up</a></h1>
 			    {% endif %}
             </form>
             </div>
         </header>
         <p>
             <div style="position: absolute; bottom: 5px; left: 5px; color: antiquewhite;">
-            Hi, We are Developing a website tailored to analyze and visualize a company's data structures,
-             aimed at uncovering trends and critical insights pivotal for effective management of development processes and teams.
-              This platform implement AGILE methodologies to empower stakeholders to make informed decisions, optimize workflows, 
-              and enhance project outcomes.
-        </div>
-    </p>
-</section>
-
+                Hi, We are Developing a website tailored to analyze and visualize a company's data structures,
+                aimed at uncovering trends and critical insights pivotal for effective management of development processes and teams.
+                This platform implement AGILE methodologies to empower stakeholders to make informed decisions, optimize workflows, 
+                and enhance project outcomes.
+            </div>
+        </p>
+    </section>
 
 
     <!--                                Log-In section                              -->
     {% if data.display == "Log-In Page" %}
     <section>
+        <header>
             <form action="" method="POST">                
                 {% csrf_token %} 
                 {% for field in form %}
@@ -68,7 +68,8 @@
                 {% endfor %}
             <button type="submit"> Login </button>
             </form>
-      <script>
+        </header>
+        <script>
             function togglePasswordVisibility() {
                 var passwordInput = document.getElementById("id_password");
                 var icon = document.querySelector(".password-toggle-icon");
@@ -87,8 +88,7 @@
 
     <!--                                Sign-Up section                              -->
     {% if data.display == "Sign-up Page" %}
-
-        <section>
+    <section>
         <header>
             <form action="" method="POST">                
                 {% csrf_token %} 

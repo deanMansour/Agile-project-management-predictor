@@ -1,0 +1,100 @@
+<div class="d-flex">
+    <!-- Sidebar -->
+    <div class="d-flex flex-column flex-shrink-0 p-3 text-bg-dark" style="width: 280px; height: 100vh;">
+        <a href="/" class="btn btn-primary mb-3 text-white">
+            <svg class="bi pe-none me-2" width="0" height="32"><use xlink:href="#bootstrap"/></svg>
+            <span class="fs-4" style="font-size: 20px;">Home Page</span>
+        </a>
+        <a href="{% url 'Dashboard_path' %}" class="text-white text-decoration-none">
+            <span class="fs-4" style="font-size: 20px; font-weight: bold;"> Insights </span>
+        </a>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <form action="" method="POST">
+                {% csrf_token %}
+                <select name="selected-project" id="id_project" style="width: 200px; height: 28px;">
+                    <option value="">Select Project</option>
+                    {% for project in data.all_projects %}
+                        <option value="{{ project.id }}">{{ project.project_name }}</option>
+                    {% endfor %}
+                </select>
+                <button name="Select_Project" type="submit">Select Project</button>
+            </form>
+            
+            <!--{% if user.is_staff == True %}
+            <li class="nav-item">
+                <a href="#" class="nav-link active" aria-current="page" onclick="showAdminEditor()">
+                    <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#speedometer2"/></svg>
+                    Admin Editor
+                </a>
+            </li>
+            {% endif %}-->
+            <li class="nav-item">
+                <a href="#" class="nav-link text-white" aria-current="page" onclick="showOverview({{ data.dashboard_project.id }})" style="font-size: 20px;">
+                    <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#home"/></svg>
+                    Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link text-white " onclick="showMeasurements({{ data.dashboard_project.id }})" style="font-size: 20px; ">
+                    <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#speedometer2"/></svg>
+                    Measurements
+                </a>
+            </li>
+        </ul>
+
+        <div class="dropdown dropup" >
+            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <img src="" alt="" width="32" height="32" class="rounded-circle me-2">
+              <strong>{{user.username}}</strong>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+              <li><a class="dropdown-item" href="#">Profile</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#">Sign out</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="w-100" id="main-content">
+        <!-- Content will be loaded dynamically here -->
+    </div>
+</div>
+
+<script>
+    function showOverview(projectId) {
+        fetch(`overview/${projectId}/`)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("overview-content").innerHTML = data;
+                document.getElementById("measurements-content").innerHTML = ''; // Clear the other content
+                document.getElementById("admin-content").innerHTML= ''
+            })
+            .catch(error => console.error('Error fetching overview:', error));
+    }
+    
+    function showMeasurements(projectId) {
+        fetch(`measurements/${projectId}/`)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("measurements-content").innerHTML = data;
+                document.getElementById("overview-content").innerHTML = ''; // Clear the other content
+                document.getElementById("admin-content").innerHTML= ''
+            })
+            .catch(error => console.error('Error fetching measurements:', error));
+    }
+    function showAdminEditor() {
+        fetch('admin_OR_user_MainPage.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("admin-content").innerHTML= data
+                document.getElementById("measurements-content").innerHTML = '';
+                document.getElementById("overview-content").innerHTML = ''; // Clear the other content
+            })
+            .catch(error => console.error('Error fetching measurements:', error));
+    }
+
+    
+    
+</script>

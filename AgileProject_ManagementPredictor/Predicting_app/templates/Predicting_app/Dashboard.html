@@ -1,0 +1,46 @@
+{% extends "base.html" %} <!-- Extends the base template -->
+
+{% load static %} <!-- Load static files -->
+
+{% block content %} <!-- Define the content block -->
+
+<div class="d-flex">
+    {% include "sidebar.html" %} <!-- Include the sidebar -->
+
+    <div class="w-100"> 
+        <!-- Main Content -->
+        <!-- Include header.html if needed -->
+        <div class="my-3 mx-3"> 
+            <div>
+                {% if data.dashboard_project %}
+                    <!-- Display selected project name -->
+                    <h2 id="project-name">Selected Project: {{ data.dashboard_project.project_name }}</h2>
+                    <hr>
+                    {% if user.is_staff == True %}
+                        <div id="admin-content"></div>
+                    {% endif %}
+                    <div id="overview-content">
+                        {% include "Predicting_app/overview.html" %}
+                    </div>
+                    <div id="measurements-content">
+                        {% include "Predicting_app/measurements.html" %}
+                    </div>
+                {% else %}
+                    <!-- Display message if no project selected -->
+                    <hr>
+                    <div class="alert alert-info text-center" role="alert" style="font-size: 36px; padding: 20px;">
+                        <strong>No project selected!</strong> Please select a project from the sidebar.
+                    </div>
+                    <p style="width: 50%; text-align: center; margin: 0 auto;">
+                        Before you dive in, it's important to choose a specific project to view. This will help you focus your attention and make the most of your time.  Consider what project you're currently working on or what interests you the most right now. Once you've selected a project, you can easily access all the relevant information and resources.
+                    </p>
+                {% endif %}
+            </div>
+ 
+            <!-- Include JavaScript file -->
+            <script src="{% static 'Predicting_app/js/project_details.js' %}"></script>            
+        </div>
+    </div>      
+</div>
+
+{% endblock content %} <!-- End of content block -->

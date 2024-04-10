@@ -58,9 +58,10 @@ Profile.objects.all().get(name=..)        return all objects with name=...
 Profile.objects.get(name=..)        return only one object with name=...
 
 -----saved users accounts---
-user username: user
-     password: user123
+usernamer : dm-user
+pass: unlock123
 
 ------------------Files commands-----------------------------------------
 in views.py to get a file post request:
 request.FILES
+
