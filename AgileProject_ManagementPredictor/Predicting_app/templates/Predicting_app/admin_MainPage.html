@@ -10,6 +10,14 @@ If "get project Predict" button clicked then this page will transition to
 -->
 {% block content %}
     <header>
+        <!-- Error message display -->
+        {% if messages %}
+        <ul class="messages">
+           {% for message in messages %}
+               <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+         {% endif %}
         Welcome, {{ user.username }}  
         <form action="" method="POST" enctype="multipart/form-data" id="main-form">
             {% csrf_token %}
@@ -22,7 +30,7 @@ If "get project Predict" button clicked then this page will transition to
             
             <h3 class="h3_section">-----------Admin Files Uploading------------</h3>                
             <!-- Input field for Uploading project data file(that also accept .csv files) -->                
-            <input type="file" name="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+            <input type="file" name="file" title="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
             <button type="submit" id="Upload_Project_Data" name="Upload Project Data">Upload Project Data</button>
             <!--error message if no file chosen-->
             {% if data.error_message == 2 %}   
@@ -143,6 +151,19 @@ If "get project Predict" button clicked then this page will transition to
 
     // Initially show the first project
     updateProjectVisibility();
+
+
+
+    function showPopup(message, messageType) {
+            Swal.fire({
+                icon: messageType,
+                title: 'Message',
+                text: message,
+                timer: 3000, // Time duration the popup is visible
+                showConfirmButton: false // Hide the "OK" button
+            });
+        }
+     
 </script>
 
 

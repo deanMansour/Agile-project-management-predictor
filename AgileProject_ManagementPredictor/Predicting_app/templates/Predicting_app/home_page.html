@@ -8,7 +8,17 @@
 {% block content %}    
     <section>
         <header>
-            <link href="{% static 'Predicting_app/loginStyle.css' %}" rel="stylesheet">
+            <link href="{% static 'Predicting_app/css/loginStyle.css' %}" rel="stylesheet">
+            <style>body{
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                background: url("{% static 'Predicting_app/images/background.jpg' %}") no-repeat;
+                background-size: cover;
+                background-position: center;
+            }</style>
+
             {% if user.is_authenticated %}
             <span style="color: antiquewhite;" class="logged-in-title">Logged-In account : {{ user.username }}</span>
             {% else %}

@@ -22,6 +22,8 @@ from .models import Excel_File_Data, Excel_Row_Data
 import pandas as pd    # for this : pip install pandas
 import csv          # for csv files
 import io
+from django.contrib import messages #import messages
+    
 
 # Create your views here.
 #================================================================================  
@@ -62,15 +64,18 @@ class Selected_Projects:
         return bool(self._selected_excel_projects)
 
     def delete_selected_projects(self):
+       
         # Loop through each selected project and delete it along with its associated rows
         for project in self._selected_excel_projects:
             # Delete associated rows first
             project.excel_rows.all().delete()
             # Remove the project from the list of selected projects
-            self._selected_project_ids.remove(project.id)
+            self._selected_project_ids.remove(str(project.id))
+            self._selected_excel_projects = list(self._selected_excel_projects)  # Convert QuerySet to list
             self._selected_excel_projects.remove(project)
             # Now delete the project itself
             project.delete()
+
 
                 #----Dashboard project methods-----
     
@@ -101,6 +106,28 @@ class Selected_Projects:
             'developer_average_bug_fixing_time' : Compute_Developer_Expertise_Score.developer_average_bug_fixing_time(self._dashboard_project, excel_rows, developers_name_list),
         }    
         return des_results_list
+    
+       ##### issues information for chart  #####
+    def project_tasks_overview(self,status):
+        excel_rows = self._dashboard_project.excel_rows.all()
+        story_count=bug_count=task_count=subTask_count=0
+        task_type_counts = {}
+        for excel_row in excel_rows:
+            if excel_row.json_data["Status"] == status:
+                task_type = excel_row.json_data["Issue Type"]
+                if task_type == "Story":
+                    story_count += 1
+                elif task_type == "Bug":
+                    bug_count += 1
+                elif task_type == "Task":
+                    task_count += 1
+                elif task_type == "Sub-task":
+                    subTask_count += 1
+        task_type_counts={"Task":task_count,"Sub-task":subTask_count,"Story":story_count,"Bug":bug_count}
+
+        
+        return task_type_counts
+
 #================================= 2 ===============================================
 class Compute_Developer_Expertise_Score:
     @staticmethod
@@ -172,7 +199,7 @@ class Compute_Developer_Expertise_Score:
         
         return developer_average_bug_fixing_time_results_dict
 #================================= 3 ===============================================
-class Upload_to_DB:    
+class Upload_to_DB:   
     @staticmethod
     def csv_file(request):
         uploaded_file = request.FILES['file']                
@@ -189,7 +216,7 @@ class Upload_to_DB:
                     row_data[field_name] = value
                 all_data.append(row_data)  # Append the row data to the list
 
-            return Upload_to_DB.create_excel_file(field_names, all_data)
+            return Upload_to_DB.create_excel_file(request,field_names, all_data)
     #--------------------------------------------------------------------------------
     @staticmethod
     def excel_file(request):
@@ -209,10 +236,22 @@ class Upload_to_DB:
             
             field_names = df.columns
             
-            return Upload_to_DB.create_excel_file(field_names, all_data)
+            return Upload_to_DB.create_excel_file(request,field_names, all_data)
     #--------------------------------------------------------------------------------
     @staticmethod
-    def create_excel_file(field_names, all_data):
+    def create_excel_file(request,field_names, all_data):
+        project_name = None
+        for field_name, value in zip(field_names, all_data[0].values()):
+            if "project name" in field_name.lower():
+                project_name = value.strip()
+                break
+
+        # If project name is found, check if it already exists
+        if project_name:
+            if Excel_File_Data.objects.filter(project_name__iexact=project_name).exists():
+                messages.error(request, 'Project with the same name already exists, Choose another one.')
+                return
+
         # Create instances of Excel_Row_Data and save them to the database
         excel_rows_data_instances = []
         for data in all_data:
@@ -232,6 +271,9 @@ class Upload_to_DB:
                 break  # Exit the loop after setting the project name
         excel_file_DB_instance.excel_rows.add(*excel_rows_data_instances)
         return excel_file_DB_instance
+    
+    
+    
 
 #================================Home Page views=================================
 #================================================================================
@@ -332,11 +374,9 @@ class admin_MainPage_view(View):
         error_message = None
         # if clicked on "Select Projects" button
         if 'Select Projects' in request.POST:
-            print('i clicked select projects')
             # Check if selected project ids is in the request POST data--->if yes, then now some projects been selected
             if 'selected-projects' in request.POST:
-                print('i fount id projects')
-
+          
                 # Retrieve selected project IDs from the request POST data
                 self.selected_Projects_instance.set_projects_by_ids_list(request.POST.getlist('selected-projects', []))
             else:
@@ -422,13 +462,25 @@ def overview_page(request, project_id):
     selected_Projects_instance.set_dashboard_project_by_id(project_id)
 
     all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
-    user_object = request.user     
+    user_object = request.user 
+
+    ####
+    issue_count_open=selected_Projects_instance.project_tasks_overview('Open')   
+    issue_count_close=selected_Projects_instance.project_tasks_overview('Closed')   
+    issue_data = []
+    for issue_type, open_count in issue_count_open.items():
+        closed_count = issue_count_close.get(issue_type, 0)
+        issue_data.append({"type": issue_type, "open": open_count, "closed": closed_count})
+  
+    ####
+        
     data_to_render = {
         'display': "Overview Page",
         'all_projects': all_excel_projects,
         'selected_Projects_instance': selected_Projects_instance,
         'dashboard_project_id': selected_Projects_instance.get_dashboard_project_id(),
         'dashboard_project': selected_Projects_instance.get_dashboard_project(),
+        'issue_data': issue_data,
     }
     return render(request, 'Predicting_app/overview.html', {'data': data_to_render, 'user': user_object})
 #--------------------------------------------------------------------------------

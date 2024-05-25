@@ -1,33 +1,93 @@
-<h2>overview</h2>
+{% load static %}
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/data.js"></script>
+<script src="https://code.highcharts.com/highcharts.src.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+<script src="https://cdn.datatables.net/2.0.7/js/dataTables.js"></script>
+<link href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.css" rel="stylesheet" type="text/css">
+<link href="{% static 'Predicting_app/css/overviewCSS.css' %}" rel="stylesheet">
+
 {% if data.dashboard_project %}
-<div>
-    <h3>All Tasks</h3>
-    <!-- Table for project data -->
-    <table class="selected-project-table">
-        <thead>
-            <tr>
-                <!-- Add a column for row index -->
-                <th>#</th>
-                <!-- Iterate over all fields of Excel_Row_Data to display headers -->
-                {% for field, value in data.dashboard_project.excel_rows.first.json_data.items %}
-                    <th>{{ field }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for excel_row_data in data.dashboard_project.excel_rows.all %}
-                <!-- Iterate over each row of Excel_Row_Data -->
+
+
+<div class="container-fluid">
+    <div class="row">
+       
+      <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header" style="font-size: 1rem; color: darkblue; font-weight: bold;">
+                Project Database
+            </div>
+          <div class="card-body" style="max-height: 400px; overflow-y: auto; max-width: 535px;">
+            <table class="selected-project-table" id="database" style="min-width: 400px; font-size: 10px;">
+              <thead>
                 <tr>
-                    <!-- Show row index in the first column -->
-                    <td>{{ forloop.counter }}</td>
-                    <!-- Show each field value in a separate column -->
-                    {% for field, value  in excel_row_data.json_data.items %} 
-                            <td>{{ value }}</td>
-                    {% endfor %}                
+                  <th>#</th>
+                  {% for field, value in data.dashboard_project.excel_rows.first.json_data.items %}
+                    <th>{{ field }}</th>
+                  {% endfor %}
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+              </thead>
+              <tbody>
+                {% for excel_row_data in data.dashboard_project.excel_rows.all %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    {% for field, value  in excel_row_data.json_data.items %} 
+                      <td>{{ value }}</td>
+                    {% endfor %}                
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+  
+      <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header" style="font-size: 1rem; color: darkblue; font-weight: bold;">
+                Chart showing the distribution of issues in the project
+            </div>
+            <div class="card-body" style="height: 400px;">
+                <figure class="highcharts-figure">
+                    <div id="container" style="width: 100%; height: 400px;"></div>
+                    <table id="datatable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Open</th>
+                                <th>Closed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for issue in data.issue_data %}
+                                <tr>
+                                    <td>{{ issue.type }}</td>
+                                    <td>{{ issue.open }}</td>
+                                    <td>{{ issue.closed }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </figure>
+                <script src="{% static 'Predicting_app/js/overviewJS.js' %}"></script> 
+
+            
+              
+            </div>
+        </div>
+      </div>
+
+      
+          
+            
+    </div>
 </div>
 
+
 {% endif %}
+
+

@@ -72,6 +72,7 @@ button {
 /* Style the selected project section */
 .selected-project {
   margin-top: 20px;
+  align-items: center;
 }
 
 /* Style the table */
