@@ -42,7 +42,26 @@
     {% endfor %}
   </table>
   <h3>----------------------------------------------------------------------</h3> 
-  <h2>Versatility and Breadth Index: <span class="versatility-index">{{ data.results.DES.versatility_and_breadth_index }}</span></h2>
+  <h2>Versatility and Breadth Index: </h2>
+    <div class="versatility-index">
+      <table class="result-table">
+        <tr>
+          <th>Developer Name</th>
+          <th>Versatility and Breadth Index</th>
+        </tr>
+        {% for developer_name, vd in data.results.DES.versatility_and_breadth_index.items %}
+        <tr>
+          <td>{{ developer_name }}</td>
+          <td>{{ vd }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+       
+
+
+
+
   <h3>----------------------------------------------------------------------</h3> 
   <h2>Developer Average Bug Fixing Time:</h2>
   <h5>Total time spent by developer / Count of bugs fixed by developer</h5>

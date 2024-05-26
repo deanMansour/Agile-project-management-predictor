@@ -23,6 +23,9 @@ import pandas as pd    # for this : pip install pandas
 import csv          # for csv files
 import io
 from django.contrib import messages #import messages
+import random
+import math
+from collections import defaultdict
     
 
 # Create your views here.
@@ -100,31 +103,27 @@ class Selected_Projects:
     def dashboard_compute_DES(self):
         excel_rows = self._dashboard_project.excel_rows.all()
         developers_name_list = [excel_row.json_data.get("Assignee", "").lower() for excel_row in excel_rows]
+        ## add to des_result_list when i finish it-> 'DES_score' : Compute_Developer_Expertise_Score.compute_DES(developers_name_list)
         des_results_list = {
             'priority_weighted_fixed_issues' : Compute_Developer_Expertise_Score.priority_weighted_fixed_issues(self._dashboard_project, excel_rows, developers_name_list),
             'versatility_and_breadth_index' : Compute_Developer_Expertise_Score.versatility_and_breadth_index(self._dashboard_project),
             'developer_average_bug_fixing_time' : Compute_Developer_Expertise_Score.developer_average_bug_fixing_time(self._dashboard_project, excel_rows, developers_name_list),
+            
         }    
         return des_results_list
     
-       ##### issues information for chart  #####
+    #### issues information for chart  #####
     def project_tasks_overview(self,status):
         excel_rows = self._dashboard_project.excel_rows.all()
-        story_count=bug_count=task_count=subTask_count=0
         task_type_counts = {}
+
         for excel_row in excel_rows:
             if excel_row.json_data["Status"] == status:
                 task_type = excel_row.json_data["Issue Type"]
-                if task_type == "Story":
-                    story_count += 1
-                elif task_type == "Bug":
-                    bug_count += 1
-                elif task_type == "Task":
-                    task_count += 1
-                elif task_type == "Sub-task":
-                    subTask_count += 1
-        task_type_counts={"Task":task_count,"Sub-task":subTask_count,"Story":story_count,"Bug":bug_count}
-
+                if task_type in task_type_counts:
+                  task_type_counts[task_type] += 1
+                else:
+                   task_type_counts[task_type] = 1
         
         return task_type_counts
 
@@ -170,7 +169,79 @@ class Compute_Developer_Expertise_Score:
     #--------------------------------------------------------------------------------
     @staticmethod
     def versatility_and_breadth_index(dashboard_project):
-        return None
+       # Fetch all developer names and fixed issues count by developer
+       all_developers_names = Compute_Developer_Expertise_Score.all_developers_names()
+       fixed_issues_count_by_developer = Compute_Developer_Expertise_Score.bugs_fixed_by_developer()
+
+       # Calculate number of bugs per product type
+       product_bug_counts = defaultdict(int)
+       all_projects = Excel_File_Data.objects.all()
+       for project in all_projects:
+           excel_rows = project.excel_rows.all()
+           for row in excel_rows:
+              issue_type = row.json_data.get("Issue Type", "").lower()
+              product_name = row.json_data.get("Component_test", "").lower()
+              if issue_type == "bug":
+                product_bug_counts[product_name] += 1
+
+       # Calculate versatility index
+       versatility_index = {}
+       total_products = len(product_bug_counts)
+
+       for developer, product_counts in fixed_issues_count_by_developer.items():
+            vd = 0.0
+            for product, bugs_resolved in product_counts.items():
+               total_bugs_product = product_bug_counts.get(product, 1)  # Avoid division by zero
+            
+               if total_bugs_product > 0:
+                   p_d_j = bugs_resolved / total_bugs_product
+                   if p_d_j > 0:
+                       vd -= p_d_j * math.log(p_d_j)
+        
+            versatility_index[developer] = vd
+       return versatility_index
+    
+    #function that help find all the developers 
+    def all_developers_names():
+        developers_names = set()
+        all_projects = Excel_File_Data.objects.all()
+        for project in all_projects:
+           excel_rows = project.excel_rows.all()
+           for row in excel_rows:
+              developer_name = row.json_data.get("Assignee", "").lower()
+              if developer_name:
+                  developers_names.add(developer_name)
+        return list(developers_names)
+    
+    #function that find all the types of bugs
+    def all_products_name():
+        products_names = set()
+        all_projects = Excel_File_Data.objects.all()
+        for project in all_projects:
+            excel_rows = project.excel_rows.all()
+            for row in excel_rows:
+               product_name = row.json_data.get("Component_test", "").lower()
+               if product_name:
+                  products_names.add(product_name)
+        return list(products_names)
+
+    # function that find the number of bugs fixed by a developer in each product
+    def bugs_fixed_by_developer():
+        developer_bug_counts = defaultdict(lambda: defaultdict(int))
+        all_developers = set(Compute_Developer_Expertise_Score.all_developers_names())
+        all_projects = Excel_File_Data.objects.all()
+        for project in all_projects:
+            excel_rows = project.excel_rows.all()
+            for row in excel_rows:
+                developer_name = row.json_data.get("Assignee", "").lower()
+                product_name = row.json_data.get("Component_test", "").lower()
+                issue_type = row.json_data.get("Issue Type", "").lower()
+                status = row.json_data.get("Status", "").lower()
+            
+                if developer_name in all_developers and issue_type == "bug" and (status == "closed" or status == "resolved"):
+                   developer_bug_counts[developer_name][product_name] += 1
+
+        return developer_bug_counts
     #--------------------------------------------------------------------------------
     @staticmethod
     def developer_average_bug_fixing_time(dashboard_project, excel_rows, developers_name_list):
@@ -198,6 +269,34 @@ class Compute_Developer_Expertise_Score:
                 developer_average_bug_fixing_time_results_dict[developer_name] = total_time_spent_by_developer[developer_name] / count_of_bugs_fixed_by_developer[developer_name]
         
         return developer_average_bug_fixing_time_results_dict
+    
+    #--------------------------------------------------------------------------------
+     ## Function to compute DES and return list of developers by DES score order
+     ##right now i need to figure out how to choose alpha var based on the academic paper 
+    def compute_DES(all_developers_names):
+       DES_scores = {}
+       alpha_option = [1, 2, 3]
+       fixed_issues_count_by_developer=Compute_Developer_Expertise_Score.bugs_fixed_by_developer()
+       versatility_index=Compute_Developer_Expertise_Score.versatility_and_breadth_index()
+
+       for developer, product_counts in fixed_issues_count_by_developer.items():
+            mu_d = 1.0  # Assuming a default value for mu_d
+            vd = versatility_index.get(developer, 0.0)
+            td = Compute_Developer_Expertise_Score.calculate_average_bug_fix_time(developer)  # Function to calculate average bug fix time
+
+            if alpha_option == 1:
+               Sd = alpha[0] * mu_d + alpha[1] * vd + alpha[2] * td
+            elif alpha_option == 2:
+               Sd = alpha[0] * mu_d + alpha[1] * td + alpha[2] * vd
+            else:
+               raise ValueError("Invalid alpha option")
+
+            DES_scores[developer] = Sd
+
+       # Rank developers based on DES score
+       ranked_developers = sorted(DES_scores.items(), key=lambda x: x[1], reverse=True)
+    
+       return ranked_developers
 #================================= 3 ===============================================
 class Upload_to_DB:   
     @staticmethod
@@ -215,7 +314,10 @@ class Upload_to_DB:
                 for field_name, value in zip(field_names, row):
                     row_data[field_name] = value
                 all_data.append(row_data)  # Append the row data to the list
-
+            
+                random_values = ["Logic Error", "Runtime Error", "Syntax Error", "Performance Issue", "Security Bug", "UI Bug"]
+                row_data['Component_test'] = random.choice(random_values)
+                all_data.append(row_data)  # Append the row data to the list
             return Upload_to_DB.create_excel_file(request,field_names, all_data)
     #--------------------------------------------------------------------------------
     @staticmethod
@@ -235,7 +337,13 @@ class Upload_to_DB:
                 all_data.append(row_data)
             
             field_names = df.columns
-            
+
+            # Generate random values for the new column Component_test 
+            # *** DO NOT FORGET TO DELETE WHEN HANOH GIVES US UPDATED DATA***
+            random_values = ["Logic Error", "Runtime Error", "Syntax Error", "Performance Issue", "Security Bug", "UI Bug"]
+            df['Component_test'] = [random.choice(random_values) for _ in range(len(df))]
+
+
             return Upload_to_DB.create_excel_file(request,field_names, all_data)
     #--------------------------------------------------------------------------------
     @staticmethod
@@ -444,6 +552,14 @@ class dashboard(View):
             else :
                 self.selected_Projects_instance = Selected_Projects()
 
+        issue_count_open=self.selected_Projects_instance.project_tasks_overview('Open')   
+        issue_count_close=self.selected_Projects_instance.project_tasks_overview('Closed')   
+        issue_data = []
+        for issue_type, open_count in issue_count_open.items():
+           closed_count = issue_count_close.get(issue_type, 0)
+           issue_data.append({"type": issue_type, "open": open_count, "closed": closed_count})
+
+
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
         user_object = request.user        
         data_to_render = {
@@ -453,6 +569,7 @@ class dashboard(View):
             'dashboard_project_id': self.selected_Projects_instance.get_dashboard_project_id(),
             'dashboard_project': self.selected_Projects_instance.get_dashboard_project(),
             'results' : results,
+            'issue_data' : issue_data,
         }
 
         return render(request, 'Predicting_app/Dashboard.html', {'data': data_to_render, 'user': user_object})
