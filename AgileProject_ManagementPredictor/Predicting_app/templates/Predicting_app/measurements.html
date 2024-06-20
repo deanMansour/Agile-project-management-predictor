@@ -1,80 +1,109 @@
-<style>
-    /* Styles for the tables */
-    .result-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-    }
-    .result-table th,
-    .result-table td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    .result-table th {
-      background-color: #f2f2f2;
-    }
-  </style>
-  
-  <h2>Priority Weighted Fixed Issues:</h2>
-  <h5>Count of bugs with same priority fixed by developer / Same priority total count</h5>
-  <table class="result-table">
-    <tr>
-      <th>Developer Name</th>
-      <th>Priority</th>
-      <th>Weight</th>
-    </tr>
-    {% for developer_name, priorities in data.results.DES.priority_weighted_fixed_issues.items %}
-      <tr>
-        <td rowspan="{{ priorities|length }}">{{ developer_name }}</td>
-        {% for priority, weight in priorities.items %}
-        {% if forloop.first %}
-        <td>{{ priority }}</td>
-        <td>{{ weight }}</td>
-        </tr>
-        {% else %}
-        <tr>
-          <td>{{ priority }}</td>
-          <td>{{ weight }}</td>
-        </tr>
-        {% endif %}
-        {% endfor %}
-    {% endfor %}
-  </table>
-  <h3>----------------------------------------------------------------------</h3> 
-  <h2>Versatility and Breadth Index: </h2>
-    <div class="versatility-index">
-      <table class="result-table">
-        <tr>
-          <th>Developer Name</th>
-          <th>Versatility and Breadth Index</th>
-        </tr>
-        {% for developer_name, vd in data.results.DES.versatility_and_breadth_index.items %}
-        <tr>
-          <td>{{ developer_name }}</td>
-          <td>{{ vd }}</td>
-        </tr>
-        {% endfor %}
+
+{% load static %}
+
+<head>
+  <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
+<link href="{% static 'Predicting_app/css/measurements_style.css' %}" rel="stylesheet">
+</head>
+<body>
+
+  <div class="container">
+    <!-- Priority Weighted Fixed Issues -->
+    <h4 class="collapsible-header" data-toggle="collapse" href="#priorityWeightedFixedIssues" role="button" aria-expanded="false" aria-controls="priorityWeightedFixedIssues">
+      <i class="fas fa-chevron-down"></i> Priority Weighted Fixed Issues
+    </h4>
+    <div class="collapse" id="priorityWeightedFixedIssues">
+      <h5>Count of bugs with same priority fixed by developer / Same priority total count</h5>
+      <table class="result-table" id="result-table-1">
+        <thead>
+          <tr>
+            <th>Developer Name</th>
+            <th>𝜇𝑑</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for developer_name, measure in data.results.priority_weighted_fixed_issues.items %}
+            <tr>
+              <td>{{ developer_name }}</td>
+              <td>{{ measure }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
-       
+    <h3>----------------------------------------------------------------------</h3> 
 
+    <!-- Versatility and Breadth Index -->
+    <h4 class="collapsible-header" data-toggle="collapse" href="#versatilityIndex" role="button" aria-expanded="false" aria-controls="versatilityIndex">
+      <i class="fas fa-chevron-down"></i> Versatility and Breadth Index
+    </h4>
+    <div class="collapse" id="versatilityIndex">
+      <table class="result-table" id="result-table-2">
+        <thead>
+          <tr>
+            <th>Developer Name</th>
+            <th>Versatility and Breadth Index</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for developer_name, vd in data.results.versatility_and_breadth_index.items %}
+            <tr>
+              <td>{{ developer_name }}</td>
+              <td>{{ vd }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <h3>----------------------------------------------------------------------</h3> 
 
+    <!-- Developer Average Bug Fixing Time -->
+    <h4 class="collapsible-header" data-toggle="collapse" href="#averageBugFixingTime" role="button" aria-expanded="false" aria-controls="averageBugFixingTime">
+      <i class="fas fa-chevron-down" id="average-icon"></i> Developer Average Bug Fixing Time
+    </h4>
+    <div class="collapse" id="averageBugFixingTime">
+      <h5>Total time spent by developer / Count of bugs fixed by developer</h5>
+      <table class="result-table" id="result-table-3">
+        <thead>
+          <tr>
+            <th>Developer Name</th>
+            <th>Average Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for developer_name, avg_time in data.results.developer_average_bug_fixing_time.items %}
+            <tr>
+              <td>{{ developer_name }}</td>
+              <td>{{ avg_time }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>  
+ <!-- <script src="{% static 'Predicting_app/js/measurementsJS.js' %}"></script>-->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
 
+$(document).ready(function(){
+  $(document).ready(function() {
+    $('.collapsible-header').on('click', function() {
+      let icon = $(this).find('i');
+      if (icon.hasClass('fa-chevron-down')) {
+        icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+      } else {
+        icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+      }
+    });
+  });
+    new DataTable('#result-table-1');
+    new DataTable('#result-table-2');
+    new DataTable('#result-table-3');
+});
 
-  <h3>----------------------------------------------------------------------</h3> 
-  <h2>Developer Average Bug Fixing Time:</h2>
-  <h5>Total time spent by developer / Count of bugs fixed by developer</h5>
-  <table class="result-table">
-    <tr>
-      <th>Developer Name</th>
-      <th>Average Time</th>
-    </tr>
-    {% for developer_name, avg_time in data.results.DES.developer_average_bug_fixing_time.items %}
-    <tr>
-      <td>{{ developer_name }}</td>
-      <td>{{ avg_time }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  
+  </script>
+</html>

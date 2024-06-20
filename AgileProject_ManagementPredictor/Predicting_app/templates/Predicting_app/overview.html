@@ -1,14 +1,10 @@
 {% load static %}
 
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/data.js"></script>
-<script src="https://code.highcharts.com/highcharts.src.js"></script>
-<script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="https://code.highcharts.com/modules/accessibility.js"></script>
 
-<script src="//cdn.datatables.net/2.0.7/js/dataTables.min.js"></script>
-<link href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.css" rel="stylesheet" type="text/css">
-<link href="{% static 'Predicting_app/css/overviewCSS.css' %}" rel="stylesheet">
+<head>
+    <link href="{% static 'Predicting_app/css/overviewCSS.css' %}" rel="stylesheet">
+</head>
+
 
 {% if data.dashboard_project %}
 
@@ -21,7 +17,7 @@
                     Project Database
                 </div>
                 <div class="card-body" style="max-height: 400px; overflow-y: auto; max-width: 535px;">
-                    <table class="selected-project-table" id="database" style="min-width: 400px; font-size: 10px;">
+                    <table id="database" class="selected-project-table"  style="min-width: 400px; font-size: 10px;">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -40,6 +36,14 @@
                                 </tr>
                             {% endfor %}
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>#</th>
+                                {% for field, value in data.dashboard_project.excel_rows.first.json_data.items %}
+                                    <th>{{ field }}</th>
+                                {% endfor %}
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -47,9 +51,6 @@
         <!-- Bar chart-->
         <div class="col-md-6">
             <div class="card mb-4">
-                <div class="card-header" style="font-size: 1rem; color: darkblue; font-weight: bold;">
-                    Chart showing the distribution of issues in the project
-                </div>
                 <div class="card-body" style="height: 400px;">
                     <figure class="highcharts-figure">
                         <div id="container" style="width: 100%; height: 400px;"></div>
@@ -80,11 +81,26 @@
         <!-- Second Row: New Cards -->
         <div class="col-md-6">
             <div class="card mb-4">
-                <div class="card-header" style="font-size: 1rem; color: darkblue; font-weight: bold;">
-                    List of developers by DES score
-                </div>
-                <div class="card-body">
-                    <!-- Add content for the new card 1 -->
+              
+                <div class="card-body" style="max-height: 400px; overflow-y: auto; max-width: 535px;">
+                    
+                    <article class="Des_list">
+                        <header>
+                          <h1 class="Des_list_title"><span class="Des_list__title--top">DES</span><span class="Des_list_title--bottom">List</span></h1>
+                        </header>
+                        
+                        <main class="Des_list_profiles">
+                            <ol class="Des_list__ol">
+                                {% for developer, score in data.des_scores %}
+                                    <li class="Des_list__item">
+                                        <span class="Des_list__index">{{ forloop.counter }}</span>
+                                        <span class="developer_name">{{ developer }}</span>
+                                        <span class="score_value">{{ score }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ol>
+                        </main>
+                      </div>
                 </div>
             </div>
         </div>

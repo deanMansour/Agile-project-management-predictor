@@ -28,7 +28,7 @@ import math
 from collections import defaultdict
     
 
-# Create your views here.
+
 #================================================================================  
 #============================Support Classes=====================================
 #================================= 1 ===============================================
@@ -98,19 +98,7 @@ class Selected_Projects:
 
     def is_dashboard_selected(self):
         # Return True if there is dashboard project
-        return bool(self._dashboard_project)
-
-    def dashboard_compute_DES(self):
-        excel_rows = self._dashboard_project.excel_rows.all()
-        developers_name_list = [excel_row.json_data.get("Assignee", "").lower() for excel_row in excel_rows]
-        ## add to des_result_list when i finish it-> 'DES_score' : Compute_Developer_Expertise_Score.compute_DES(developers_name_list)
-        des_results_list = {
-            'priority_weighted_fixed_issues' : Compute_Developer_Expertise_Score.priority_weighted_fixed_issues(self._dashboard_project, excel_rows, developers_name_list),
-            'versatility_and_breadth_index' : Compute_Developer_Expertise_Score.versatility_and_breadth_index(self._dashboard_project),
-            'developer_average_bug_fixing_time' : Compute_Developer_Expertise_Score.developer_average_bug_fixing_time(self._dashboard_project, excel_rows, developers_name_list),
-            
-        }    
-        return des_results_list
+        return bool(self._dashboard_project)   
     
     #### issues information for chart  #####
     def project_tasks_overview(self,status):
@@ -129,49 +117,68 @@ class Selected_Projects:
 
 #================================= 2 ===============================================
 class Compute_Developer_Expertise_Score:
-    @staticmethod
-    def priority_weighted_fixed_issues(dashboard_project, excel_rows, developers_name_list):
-        priorities_list = [excel_row.json_data.get("Priority", "").lower() for excel_row in excel_rows]      
+
+    def __init__(self):
+        self._measurements={}
+        self._DES_scores_dict={}
+
+        self.measurements_dict()
+        self.compute_DES()
+
+        
+
+
+    def priority_weighted_fixed_issues(self ):
+        priorities_list =self.all_priority_names()
+        developers_name_list=self.all_developers_names()
+        status_list = self.all_status_names()
+        
+       #** right now the weight is constant, after we need the user to input weight for each priority 
+        weight_for_each_priorty={'blocker': 0.4, 'critical': 0.25, 'high': 0.15, 'medium ': 0.1, 'medium': 0.1, 'low': 0.05, 'not prioritized': 0.05}
+
         same_priority_bugs_count_fixed_by_developer = {developer_name: {priority: 0 for priority in priorities_list} for developer_name in developers_name_list}
         same_priority_total_count = {priority: 0 for priority in priorities_list}        
         # Initialize dictionary to store the developer names as keys and and each priority compute result as value  
-        priority_weighted_fixed_results_dict = {developer_name: {priority: 0 for priority in priorities_list} for developer_name in developers_name_list}
-
+        priority_weighted_fixed_results_dict = {developer_name:0 for developer_name in developers_name_list}
         # Iterate over all Excel rows to count bugs fixed by priority and developer
-        for excel_row in excel_rows:
-            issue_type = excel_row.json_data.get("Issue Type", "").lower()
-            developer_name = excel_row.json_data.get("Assignee", "").lower()
-            priority = excel_row.json_data.get("Priority", "").lower() 
+        all_projects = Excel_File_Data.objects.all()
+        for project in all_projects:
+           excel_rows = project.excel_rows.all()
+           for row in excel_rows:
+            issue_type = row.json_data.get("Issue Type", "").lower()
+            developer_name = row.json_data.get("Assignee", "").lower()
+            priority = row.json_data.get("Priority", "").lower() 
+            issue_status = row.json_data.get("Status", "").lower() 
             
             # Check if the issue is a bug 
-            if issue_type == "Bug".lower():
+            if issue_type == "Bug".lower() and (issue_status=="closed" or issue_status=="resolved"):
                 # Increment total bugs with same priority count
                 if priority in priorities_list:
                     same_priority_total_count[priority] += 1
-                
                 # Increment priority count for the developer
                 if developer_name in developers_name_list:
                     same_priority_bugs_count_fixed_by_developer[developer_name][priority] += 1
 
         # Calculate the weighted priority dict for each developer
-        weight = 0
-        for developer_name in developers_name_list:   
-            for priority, count_of_bugs_with_same_priority_fixed_by_developer in same_priority_bugs_count_fixed_by_developer[developer_name].items():
-                if same_priority_total_count[priority] > 0:
-
-                    weight = count_of_bugs_with_same_priority_fixed_by_developer / same_priority_total_count[priority]
-                    priority_weighted_fixed_results_dict[developer_name][priority] = weight
-            
-            else:
-                priority_weighted_fixed_results_dict[developer_name][priority] = 0
+        for developer_name in developers_name_list:
+            for priority in priorities_list:
+                if priority !='priority':
+                   weight = weight_for_each_priorty[priority]
+                   # Calculate the priority weighted fixed issues count for each developer
+                   if developer_name in same_priority_bugs_count_fixed_by_developer:
+                       fixed_bugs_by_priority=same_priority_total_count[priority]
+                       fixed_bugs_by_priority_by_dev=same_priority_bugs_count_fixed_by_developer[developer_name][priority]
+                       priority_weighted_fixed_results_dict[developer_name] += ((fixed_bugs_by_priority_by_dev/fixed_bugs_by_priority)*weight)
         
+        for developer_name in priority_weighted_fixed_results_dict:
+            priority_weighted_fixed_results_dict[developer_name] = round(priority_weighted_fixed_results_dict[developer_name],2)
         return priority_weighted_fixed_results_dict
     #--------------------------------------------------------------------------------
-    @staticmethod
-    def versatility_and_breadth_index(dashboard_project):
+    
+    def versatility_and_breadth_index(self):
        # Fetch all developer names and fixed issues count by developer
-       all_developers_names = Compute_Developer_Expertise_Score.all_developers_names()
-       fixed_issues_count_by_developer = Compute_Developer_Expertise_Score.bugs_fixed_by_developer()
+       all_developers_names = self.all_developers_names()
+       fixed_issues_count_by_developer = self.bugs_fixed_by_developer()
 
        # Calculate number of bugs per product type
        product_bug_counts = defaultdict(int)
@@ -181,13 +188,12 @@ class Compute_Developer_Expertise_Score:
            for row in excel_rows:
               issue_type = row.json_data.get("Issue Type", "").lower()
               product_name = row.json_data.get("Component_test", "").lower()
-              if issue_type == "bug":
+              status=row.json_data.get("Status", "").lower()
+              if issue_type == "bug"  and (status == "closed" or status == "resolved"):
                 product_bug_counts[product_name] += 1
-
        # Calculate versatility index
-       versatility_index = {}
+       versatility_index = {developer_name:0 for developer_name in all_developers_names}
        total_products = len(product_bug_counts)
-
        for developer, product_counts in fixed_issues_count_by_developer.items():
             vd = 0.0
             for product, bugs_resolved in product_counts.items():
@@ -199,10 +205,14 @@ class Compute_Developer_Expertise_Score:
                        vd -= p_d_j * math.log(p_d_j)
         
             versatility_index[developer] = vd
+       
+       for developer_name in versatility_index:
+            versatility_index[developer_name] = round(versatility_index[developer_name],2)
+
        return versatility_index
     
     #function that help find all the developers 
-    def all_developers_names():
+    def all_developers_names(self):
         developers_names = set()
         all_projects = Excel_File_Data.objects.all()
         for project in all_projects:
@@ -212,9 +222,32 @@ class Compute_Developer_Expertise_Score:
               if developer_name:
                   developers_names.add(developer_name)
         return list(developers_names)
+        
+    def all_priority_names(self):
+        priority_names = set()
+        all_projects = Excel_File_Data.objects.all()
+        for project in all_projects:
+           excel_rows = project.excel_rows.all()
+           for row in excel_rows:
+              priority_name = row.json_data.get("Priority", "").lower()
+              if priority_name:
+                  priority_names.add(priority_name)
+        return list(priority_names)
     
+   
+    def all_status_names(self):
+        status_names = set()
+        all_projects = Excel_File_Data.objects.all()
+        for project in all_projects:
+           excel_rows = project.excel_rows.all()
+           for row in excel_rows:
+              status_name = row.json_data.get("Status", "").lower()
+              if status_name:
+                  status_names.add(status_name)
+        return list(status_names)
+        
     #function that find all the types of bugs
-    def all_products_name():
+    def all_products_name(self):
         products_names = set()
         all_projects = Excel_File_Data.objects.all()
         for project in all_projects:
@@ -226,9 +259,9 @@ class Compute_Developer_Expertise_Score:
         return list(products_names)
 
     # function that find the number of bugs fixed by a developer in each product
-    def bugs_fixed_by_developer():
+    def bugs_fixed_by_developer(self):
         developer_bug_counts = defaultdict(lambda: defaultdict(int))
-        all_developers = set(Compute_Developer_Expertise_Score.all_developers_names())
+        all_developers = set(self.all_developers_names())
         all_projects = Excel_File_Data.objects.all()
         for project in all_projects:
             excel_rows = project.excel_rows.all()
@@ -243,60 +276,94 @@ class Compute_Developer_Expertise_Score:
 
         return developer_bug_counts
     #--------------------------------------------------------------------------------
-    @staticmethod
-    def developer_average_bug_fixing_time(dashboard_project, excel_rows, developers_name_list):
+    
+    def developer_average_bug_fixing_time(self):
+        developers_name_list=self.all_developers_names()
         total_time_spent_by_developer = {developer_name: 0 for developer_name in developers_name_list}
         count_of_bugs_fixed_by_developer = {developer_name: 0 for developer_name in developers_name_list}        
         developer_average_bug_fixing_time_results_dict = {developer_name: 0 for developer_name in developers_name_list}
         
         # Iterate over all Excel rows to count bugs fixed by each developer and count total time spent to fix bugs by each developer
-        for excel_row in excel_rows:
-            issue_type = excel_row.json_data.get("Issue Type", "").lower()
-            developer_name = excel_row.json_data.get("Assignee", "").lower()
-            time_spent_str = excel_row.json_data.get("Time Spent", "")
-            time_spent = int(time_spent_str) if time_spent_str.isdigit() else 0
-            
-            # Check if the issue is a bug and Increment priority count
-            if issue_type == "Bug".lower():
-                # Increment priority count for the developer
-                if developer_name in developers_name_list:
-                    total_time_spent_by_developer[developer_name] += time_spent
-                    count_of_bugs_fixed_by_developer[developer_name] += 1
+        all_projects = Excel_File_Data.objects.all()
+        for project in all_projects:
+            excel_rows = project.excel_rows.all()
+            for row in excel_rows:
+                issue_type = row.json_data.get("Issue Type", "").lower()
+                developer_name = row.json_data.get("Assignee", "").lower()
+                time_spent_str = row.json_data.get("Σ Time Spent", "")  # Replace with your actual key
+                time_spent = float(time_spent_str) if time_spent_str.replace('.', '', 1).isdigit() else 0.0
+                issue_status = row.json_data.get("Status", "").lower()
+                # Check if the issue is a bug and Increment priority count
+                if issue_type == "Bug".lower() and (issue_status=="closed" or issue_status=="resolved"):
+                   # Increment priority count for the developer
+                   if developer_name in developers_name_list:
+                       total_time_spent_by_developer[developer_name] += time_spent
+                       count_of_bugs_fixed_by_developer[developer_name] += 1
             
         # Calculate the developer average bug fixing time
         for developer_name in developers_name_list:
             if count_of_bugs_fixed_by_developer[developer_name] > 0:
                 developer_average_bug_fixing_time_results_dict[developer_name] = total_time_spent_by_developer[developer_name] / count_of_bugs_fixed_by_developer[developer_name]
-        
-        return developer_average_bug_fixing_time_results_dict
+       
+        for developer_name in developer_average_bug_fixing_time_results_dict:
+            developer_average_bug_fixing_time_results_dict[developer_name] = round(developer_average_bug_fixing_time_results_dict[developer_name],2)        
+            return developer_average_bug_fixing_time_results_dict
     
     #--------------------------------------------------------------------------------
      ## Function to compute DES and return list of developers by DES score order
      ##right now i need to figure out how to choose alpha var based on the academic paper 
-    def compute_DES(all_developers_names):
+    def compute_DES(self):
        DES_scores = {}
-       alpha_option = [1, 2, 3]
-       fixed_issues_count_by_developer=Compute_Developer_Expertise_Score.bugs_fixed_by_developer()
-       versatility_index=Compute_Developer_Expertise_Score.versatility_and_breadth_index()
+       all_developers_names=self.all_developers_names()
+       alpha={'m1':1/3, 'm2':1/3, 'm3':1/3}
+       average_fix_time=self.developer_average_bug_fixing_time()
+       versatility_index=self.versatility_and_breadth_index()
+       priority_index=self.priority_weighted_fixed_issues()
 
-       for developer, product_counts in fixed_issues_count_by_developer.items():
-            mu_d = 1.0  # Assuming a default value for mu_d
+       for developer in all_developers_names:
+            mu_d =priority_index.get(developer, 0.0)
             vd = versatility_index.get(developer, 0.0)
-            td = Compute_Developer_Expertise_Score.calculate_average_bug_fix_time(developer)  # Function to calculate average bug fix time
-
-            if alpha_option == 1:
-               Sd = alpha[0] * mu_d + alpha[1] * vd + alpha[2] * td
-            elif alpha_option == 2:
-               Sd = alpha[0] * mu_d + alpha[1] * td + alpha[2] * vd
-            else:
-               raise ValueError("Invalid alpha option")
-
+            td = average_fix_time.get(developer, 0.0)
+            Sd = alpha['m1'] * mu_d + alpha['m2'] * vd + alpha['m3'] * td
+            
             DES_scores[developer] = Sd
 
        # Rank developers based on DES score
        ranked_developers = sorted(DES_scores.items(), key=lambda x: x[1], reverse=True)
+       
+       ranked_developers = [(key, round(value, 2)) for key, value in ranked_developers]
+
+       self._DES_scores_dict=ranked_developers
     
-       return ranked_developers
+#---------------------- SETTERS/GETTERS---------------------------#
+       
+    def measurements_dict(self):
+        priority=self.priority_weighted_fixed_issues()
+        versatility=self.versatility_and_breadth_index()
+        fix_time=self.developer_average_bug_fixing_time()
+        measurements= {
+            'priority_weighted_fixed_issues' :priority,
+            'versatility_and_breadth_index' : versatility,
+            'developer_average_bug_fixing_time' : fix_time}
+        
+        self._measurements=measurements
+
+       # print('**************',measurements)
+
+    def get_DES_scores_dict(self):
+        return self._DES_scores_dict
+
+    def set_DES_scores_dict(self, DES_scores_dict):
+        self._DES_scores_dict = DES_scores_dict
+
+    def get_measurements(self):
+        return self._measurements
+
+    def set_measurements(self, measurements):
+        self._measurements = measurements
+
+
+
 #================================= 3 ===============================================
 class Upload_to_DB:   
     @staticmethod
@@ -353,13 +420,19 @@ class Upload_to_DB:
             if "project name" in field_name.lower():
                 project_name = value.strip()
                 break
+            elif "issue key" in field_name.lower():
+                   project_name = value.strip()
+                   project_name = project_name.split('-')[0]
+                   break
 
         # If project name is found, check if it already exists
         if project_name:
             if Excel_File_Data.objects.filter(project_name__iexact=project_name).exists():
                 messages.error(request, 'Project with the same name already exists, Choose another one.')
                 return
-
+    
+                
+     
         # Create instances of Excel_Row_Data and save them to the database
         excel_rows_data_instances = []
         for data in all_data:
@@ -374,15 +447,23 @@ class Upload_to_DB:
             # Check if the field name contains "project name" (case insensitive)
             if "project name" in field_name.lower():
                 # Set the project name to the corresponding value
-                excel_file_DB_instance.project_name = value
+                excel_file_DB_instance.project_name = project_name
                 excel_file_DB_instance.save()
                 break  # Exit the loop after setting the project name
         excel_file_DB_instance.excel_rows.add(*excel_rows_data_instances)
+        if excel_file_DB_instance.project_name:
+            messages.success(request, 'Project '+ excel_file_DB_instance.project_name +' uploaded successfully')
+        else:
+            excel_file_DB_instance.project_name=project_name
+            excel_file_DB_instance.save()
         return excel_file_DB_instance
-    
-    
-    
 
+    
+    
+    
+#--------------------------global variables
+
+DES_scores=Compute_Developer_Expertise_Score()
 #================================Home Page views=================================
 #================================================================================
 class home_page_view(View):
@@ -455,6 +536,7 @@ class signup_page_view(View):
             form.add_error(None, 'Invalid username or password.')
             data_to_render = {'display': "Sign-up Page"}
             return render(request, 'Predicting_app/home_page.html', {'form': form, 'data':data_to_render})
+
 #==========================Logged-In account Main Page views=====================
 #================================================================================
 class admin_MainPage_view(View):    
@@ -548,9 +630,12 @@ class dashboard(View):
             selected_project_id = request.POST.get('selected-project')
             if selected_project_id:
                 self.selected_Projects_instance.set_dashboard_project_by_id(selected_project_id)
-                results = {'DES' : self.selected_Projects_instance.dashboard_compute_DES()} # return dict of DES results{}
             else :
                 self.selected_Projects_instance = Selected_Projects()
+                
+       
+        results=DES_scores.get_measurements()
+        des_scores=DES_scores.get_DES_scores_dict()
 
         issue_count_open=self.selected_Projects_instance.project_tasks_overview('Open')   
         issue_count_close=self.selected_Projects_instance.project_tasks_overview('Closed')   
@@ -558,7 +643,6 @@ class dashboard(View):
         for issue_type, open_count in issue_count_open.items():
            closed_count = issue_count_close.get(issue_type, 0)
            issue_data.append({"type": issue_type, "open": open_count, "closed": closed_count})
-
 
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
         user_object = request.user        
@@ -570,6 +654,7 @@ class dashboard(View):
             'dashboard_project': self.selected_Projects_instance.get_dashboard_project(),
             'results' : results,
             'issue_data' : issue_data,
+            'des_scores' : des_scores,
         }
 
         return render(request, 'Predicting_app/Dashboard.html', {'data': data_to_render, 'user': user_object})
@@ -580,7 +665,7 @@ def overview_page(request, project_id):
 
     all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
     user_object = request.user 
-
+    
     ####
     issue_count_open=selected_Projects_instance.project_tasks_overview('Open')   
     issue_count_close=selected_Projects_instance.project_tasks_overview('Closed')   
@@ -590,7 +675,9 @@ def overview_page(request, project_id):
         issue_data.append({"type": issue_type, "open": open_count, "closed": closed_count})
   
     ####
-        
+    result=DES_scores.get_measurements()
+    des_scores = DES_scores.get_DES_scores_dict()
+
     data_to_render = {
         'display': "Overview Page",
         'all_projects': all_excel_projects,
@@ -598,6 +685,8 @@ def overview_page(request, project_id):
         'dashboard_project_id': selected_Projects_instance.get_dashboard_project_id(),
         'dashboard_project': selected_Projects_instance.get_dashboard_project(),
         'issue_data': issue_data,
+        'results': result,
+        'des_scores':des_scores,
     }
     return render(request, 'Predicting_app/overview.html', {'data': data_to_render, 'user': user_object})
 #--------------------------------------------------------------------------------
@@ -607,11 +696,12 @@ def measurements_page(request, project_id):
 
     if project_id:
         selected_Projects_instance.set_dashboard_project_by_id(project_id)
-        results = {'DES' : selected_Projects_instance.dashboard_compute_DES()} # return dict of DES results{}
 
         # # Debug print
         # print(result)
 
+    results=DES_scores.get_measurements()
+    des_scores=DES_scores.get_DES_scores_dict()
     all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
     user_object = request.user     
     data_to_render = {
@@ -621,6 +711,7 @@ def measurements_page(request, project_id):
         'dashboard_project_id': selected_Projects_instance.get_dashboard_project_id(),
         'dashboard_project': selected_Projects_instance.get_dashboard_project(),
         'results' : results,
+        'des_scores':des_scores,
     }
     
     return render(request, 'Predicting_app/measurements.html', {'data': data_to_render, 'user': user_object})

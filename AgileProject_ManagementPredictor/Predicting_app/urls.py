@@ -10,12 +10,12 @@ urlpatterns = [
     path('signup/', views.signup_page_view.as_view(), name='signup_page_view_path'),
     
     path('logout/', views.logout_page_view, name='logout_page_view_path'), 
-    #================================================================================
-    #================================================================================
-    path('admin_account/main_Page', views.admin_MainPage_view.as_view(), name='admin_MainPage_view_path'),
-    #================================================================================
-    #================================================================================
+ 
+    
     path('Dashboard/', views.dashboard.as_view(), name='Dashboard_path'),   
+    #================================================================================
+    path('Dashboard/AdminEditor/', views.admin_MainPage_view.as_view(), name='admin_MainPage_view_path'),
+    #================================================================================
     
     # Add URL pattern for the overview page with a project ID parameter
     path('Dashboard/overview/<int:project_id>/', views.overview_page, name='overview_page_view_path'),

@@ -38,6 +38,30 @@
   margin-left: -15px;
 }
 
+/* Style for the Admin Editor button */
+.nav-item-admin .nav-link {
+  background-color: #151a47 !important;
+  color: #ffffff !important; 
+  border-radius: 5px;
+  padding: 10px 15px; 
+  text-align:left;
+   
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Hover state for the Admin Editor button */
+.nav-item-admin .nav-link:hover {
+  background-color: #151a47 !important; 
+  color: #ffffff !important; 
+}
+
+/* Active state */
+.nav-item-admin .nav-link.active {
+  background-color: #6e75c3 !important; 
+  color: #ffffff !important; 
+}
+
+
 #main-content {
   margin-left: 230px; /* Adjust this value to match the sidebar width */
   padding: 20px; /* Add padding for content */

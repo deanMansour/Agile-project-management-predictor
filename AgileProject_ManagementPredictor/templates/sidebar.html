@@ -29,14 +29,6 @@
                 <button name="Select_Project" type="submit" class="btn btn-primary mt-2">Select Project</button>
             </form>
             
-            <!--{% if user.is_staff == True %}
-            <li class="nav-item">
-                <a href="#" class="nav-link active" aria-current="page" onclick="showAdminEditor()">
-                    <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#speedometer2"/></svg>
-                    Admin Editor
-                </a>
-            </li>
-            {% endif %}-->
             <li class="nav-item">
                 <a href="#" class="nav-link text-white" aria-current="page" onclick="showOverview({{ data.dashboard_project.id }})" style="font-size: 20px;">
                     <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#home"/></svg>
@@ -49,6 +41,15 @@
                     Measurements
                 </a>
             </li>
+            <!--
+            {% if user.is_staff == True %}
+            <li class="nav-item-admin">
+                <a href="#" class="nav-link active" aria-current="page" onclick="showAdminEditor()">
+                    <svg class="bi pe-none me-2" width="5" height="16"><use xlink:href="#speedometer2"/></svg>
+                    Admin Editor
+                </a>
+            </li>
+            {% endif %} -->
         </ul>
 
         <div class="dropdown dropup" style="margin-right: 15px;">
