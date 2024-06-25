@@ -326,7 +326,6 @@ class Compute_Developer_Expertise_Score:
        average_fix_time=self.developer_average_bug_fixing_time()
        versatility_index=self.versatility_and_breadth_index()
        priority_index=self.priority_weighted_fixed_issues()
-       print(self.alpha_dict)
        for developer in all_developers_names:
             mu_d =priority_index.get(developer, 0.0)
             vd = versatility_index.get(developer, 0.0)

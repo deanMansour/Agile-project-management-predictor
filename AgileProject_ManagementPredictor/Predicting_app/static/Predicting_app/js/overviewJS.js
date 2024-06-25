@@ -1,4 +1,4 @@
-
+graph1='bar';
 
 function initializeChart() {
     // Check if the datatable element exists
@@ -33,13 +33,81 @@ function initializeChart() {
         console.error('DataTable element not found.');
     }
   }
+
   document.addEventListener('DOMContentLoaded', function () {
     initializeChart();
     new DataTable('#database');
     
-
-
 });
+
+
+function change_graph_type(){
+    if(graph1=='bar'){
+        graph1='pie';
+        var table = document.getElementById('datatable');
+        var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        var data = [];
+
+        for (var i = 0; i < rows.length; i++) {
+            var cells = rows[i].getElementsByTagName('td');
+            var type = cells[0].innerText;
+            var open = parseFloat(cells[1].innerText);
+
+            data.push({ name: type, y: open });
+        }
+        Highcharts.chart('container', {
+            chart: {
+                type: 'pie'
+            },
+            title: {
+                text: 'Distribution of issues in the project'
+            },
+            tooltip: {
+                valueSuffix: '%'
+            },
+            subtitle: {
+                text: 'Source: Issue Data'
+            },
+            plotOptions: {
+                series: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: [{
+                        enabled: true,
+                        distance: 20
+                    }, {
+                        enabled: true,
+                        distance: -40,
+                        format: '{point.percentage:.1f}%',
+                        style: {
+                            fontSize: '1.2em',
+                            textOutline: 'none',
+                            opacity: 0.7
+                        },
+                        filter: {
+                            operator: '>',
+                            property: 'percentage',
+                            value: 10
+                        }
+                    }]
+                }
+            },
+            series: [{
+                name: 'Percentage',
+                colorByPoint: true,
+                data: data
+            }]
+        });
+    }
+    else{
+        graph1='bar';
+        initializeChart()
+    }
+    
+} 
+
+
+
 function showOverview(projectId) {
     fetch(`overview/${projectId}/`)
         .then(response => response.text())
