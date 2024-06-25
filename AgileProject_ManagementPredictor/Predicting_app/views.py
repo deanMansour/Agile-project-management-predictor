@@ -1,4 +1,5 @@
 #-------------------------
+import json
 from urllib import request
 from django import template
 from django.views import View
@@ -26,6 +27,7 @@ from django.contrib import messages #import messages
 import random
 import math
 from collections import defaultdict
+from django.http import JsonResponse
     
 
 
@@ -118,9 +120,14 @@ class Selected_Projects:
 #================================= 2 ===============================================
 class Compute_Developer_Expertise_Score:
 
-    def __init__(self):
+    def __init__(self, weights=None):
         self._measurements={}
         self._DES_scores_dict={}
+        if weights:
+            self.alpha_dict= weights
+        else: self.alpha_dict=[1/3,1/3,1/3]
+
+        
 
         self.measurements_dict()
         self.compute_DES()
@@ -314,17 +321,17 @@ class Compute_Developer_Expertise_Score:
      ##right now i need to figure out how to choose alpha var based on the academic paper 
     def compute_DES(self):
        DES_scores = {}
+    
        all_developers_names=self.all_developers_names()
-       alpha={'m1':1/3, 'm2':1/3, 'm3':1/3}
        average_fix_time=self.developer_average_bug_fixing_time()
        versatility_index=self.versatility_and_breadth_index()
        priority_index=self.priority_weighted_fixed_issues()
-
+       print(self.alpha_dict)
        for developer in all_developers_names:
             mu_d =priority_index.get(developer, 0.0)
             vd = versatility_index.get(developer, 0.0)
             td = average_fix_time.get(developer, 0.0)
-            Sd = alpha['m1'] * mu_d + alpha['m2'] * vd + alpha['m3'] * td
+            Sd = self.alpha_dict[0] * mu_d + self.alpha_dict[1] * vd + self.alpha_dict[2] * td
             
             DES_scores[developer] = Sd
 
@@ -361,6 +368,14 @@ class Compute_Developer_Expertise_Score:
 
     def set_measurements(self, measurements):
         self._measurements = measurements
+
+    def set_weights(self, weights):
+        self.alpha_dict= weights
+        self.compute_DES()
+
+    
+
+        
 
 
 
@@ -633,7 +648,7 @@ class dashboard(View):
             else :
                 self.selected_Projects_instance = Selected_Projects()
                 
-       
+        
         results=DES_scores.get_measurements()
         des_scores=DES_scores.get_DES_scores_dict()
 
@@ -643,7 +658,14 @@ class dashboard(View):
         for issue_type, open_count in issue_count_open.items():
            closed_count = issue_count_close.get(issue_type, 0)
            issue_data.append({"type": issue_type, "open": open_count, "closed": closed_count})
-
+        
+        if request.method == "POST":
+           mu_d = float(request.POST.get('number1-1', 0))
+           v_d = float(request.POST.get('number1-2', 0))
+           t_d = float(request.POST.get('number1-3', 0))
+        list=[mu_d,v_d,t_d]
+        #print(list)
+        
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
         user_object = request.user        
         data_to_render = {
@@ -655,6 +677,7 @@ class dashboard(View):
             'results' : results,
             'issue_data' : issue_data,
             'des_scores' : des_scores,
+            'weights': list
         }
 
         return render(request, 'Predicting_app/Dashboard.html', {'data': data_to_render, 'user': user_object})
@@ -678,6 +701,8 @@ def overview_page(request, project_id):
     result=DES_scores.get_measurements()
     des_scores = DES_scores.get_DES_scores_dict()
 
+    
+
     data_to_render = {
         'display': "Overview Page",
         'all_projects': all_excel_projects,
@@ -687,13 +712,34 @@ def overview_page(request, project_id):
         'issue_data': issue_data,
         'results': result,
         'des_scores':des_scores,
+        
     }
     return render(request, 'Predicting_app/overview.html', {'data': data_to_render, 'user': user_object})
 #--------------------------------------------------------------------------------
 def measurements_page(request, project_id):
     selected_Projects_instance = Selected_Projects()
     results = {}
+    mu_d=v_d=t_d=1/3
 
+    if request.method == 'POST':
+        try:
+            data_received = json.loads(request.body)
+            mu_d = float(data_received.get('mu_d', 0))
+            v_d = float(data_received.get('v_d', 0))
+            t_d = float(data_received.get('t_d', 0))
+
+            total = mu_d + v_d + t_d
+
+            if total == 1:
+                weights = [mu_d, v_d, t_d]
+                DES_scores.set_weights(weights)
+                return JsonResponse({'success': True, 'weights': weights})
+            else:
+                return JsonResponse({'success': False, 'message': 'Weights do not sum to 1'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+    
     if project_id:
         selected_Projects_instance.set_dashboard_project_by_id(project_id)
 
@@ -701,6 +747,7 @@ def measurements_page(request, project_id):
         # print(result)
 
     results=DES_scores.get_measurements()
+
     des_scores=DES_scores.get_DES_scores_dict()
     all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
     user_object = request.user     

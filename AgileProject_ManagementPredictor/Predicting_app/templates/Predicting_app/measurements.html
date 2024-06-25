@@ -1,17 +1,195 @@
 
 {% load static %}
 
+<style>
+.button {
+    --color: #560bad;
+    font-family: inherit;
+    display: inline-block;
+    width: 8em;
+    height: 2.6em;
+    line-height: 2.5em;
+    margin: 20px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--color);
+    transition: color .5s;
+    z-index: 1;
+    font-size: 17px;
+    border-radius: 6px;
+    font-weight: 500;
+    color: var(--color);
+    cursor: pointer; /* Added cursor pointer for better UX */
+  }
+ 
+  .button:before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    background: var(--color);
+    height: 150px;
+    width: 200px;
+    border-radius: 50%;
+  }
+ 
+  .button:hover {
+    color: #fff;
+  }
+ 
+  .button:before {
+    top: 100%;
+    left: 100%;
+    transition: all .7s;
+  }
+ 
+  .button:hover:before {
+    top: -30px;
+    left: -30px;
+  }
+ 
+  .button:active:before {
+    background: #2929c7;
+    transition:0s;
+  }
+
+  .input-group {
+    display: flex; /* Display flex to make items in a row */
+    flex-direction: column; /* Align items vertically */
+    align-items: flex-start; /* Align items to the start */
+    margin-top: 15px;
+  }
+
+  .input-group label {
+    margin-right: 10px; /* Add spacing between label and input */
+  }
+
+  .input-group input {
+    margin-bottom: 10px; /* Add spacing between inputs */
+  }
+
+  .input-group p {
+    margin-bottom: 10px; /* Add margin below the paragraph */
+    font-weight: bold;
+  }
+
+  /* Styles for the tables */
+  .collapsible-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    background-color: #eee;
+    color: #444;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    outline: none;
+    transition: 0.4s;
+    margin-top: 30px;
+  }
+
+  .collapsible-header i {
+    margin-right: 10px;
+  }
+
+  .accordion {
+    background-color: #eee;
+    color: #444;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    outline: none;
+    transition: 0.4s;
+  }
+
+  /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+  .active, .accordion:hover {
+    background-color: #ccc;
+  }
+
+  /* Style the accordion panel. Note: hidden by default */
+  .panel {
+    padding: 0 18px;
+    background-color: white;
+    display: none;
+    overflow: hidden;
+  }
+
+  /* Tooltip container */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Tooltip text shown on hover */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Tooltip arrow */
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+</style>
+
 <head>
-  <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
-<link href="{% static 'Predicting_app/css/measurements_style.css' %}" rel="stylesheet">
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
 </head>
 <body>
 
   <div class="container">
+    <!--add here the input of alpha-->
+    <section>
+      <div>
+        {% csrf_token %}
+        <p>Please input alpha weights that sum to 1. If not provided, the weights will be split equally:</p>
+        <br>
+        <label for="number1-1" data-tooltip="Tooltip for 𝜇𝑑 weight">𝜇𝑑 weight:</label>
+        <input type="number" id="number1-1" step="any" name="number1-1">
+        <label for="number1-2" data-tooltip="Tooltip for v𝑑 weight">v𝑑 weight:</label>
+        <input type="number" id="number1-2" step="any" name="number1-2">
+        <label for="number1-3" data-tooltip="Tooltip for t𝑑 weight">t𝑑 weight:</label>
+        <input type="number" id="number1-3" step="any" name="number1-3">
+        <button class="update-alpha" onclick="update_alpha({{ data.dashboard_project_id }})">Update Alpha</button>
+      </div>
+    </section>
+
     <!-- Priority Weighted Fixed Issues -->
     <h4 class="collapsible-header" data-toggle="collapse" href="#priorityWeightedFixedIssues" role="button" aria-expanded="false" aria-controls="priorityWeightedFixedIssues">
-      <i class="fas fa-chevron-down"></i> Priority Weighted Fixed Issues
+      <i class="fas fa-plus"></i> Priority Weighted Fixed Issues
     </h4>
     <div class="collapse" id="priorityWeightedFixedIssues">
       <h5>Count of bugs with same priority fixed by developer / Same priority total count</h5>
@@ -36,7 +214,7 @@
 
     <!-- Versatility and Breadth Index -->
     <h4 class="collapsible-header" data-toggle="collapse" href="#versatilityIndex" role="button" aria-expanded="false" aria-controls="versatilityIndex">
-      <i class="fas fa-chevron-down"></i> Versatility and Breadth Index
+      <i class="fas fa-plus"></i> Versatility and Breadth Index
     </h4>
     <div class="collapse" id="versatilityIndex">
       <table class="result-table" id="result-table-2">
@@ -60,7 +238,7 @@
 
     <!-- Developer Average Bug Fixing Time -->
     <h4 class="collapsible-header" data-toggle="collapse" href="#averageBugFixingTime" role="button" aria-expanded="false" aria-controls="averageBugFixingTime">
-      <i class="fas fa-chevron-down" id="average-icon"></i> Developer Average Bug Fixing Time
+      <i class="fas fa-plus" id="average-icon"></i> Developer Average Bug Fixing Time
     </h4>
     <div class="collapse" id="averageBugFixingTime">
       <h5>Total time spent by developer / Count of bugs fixed by developer</h5>
@@ -83,27 +261,10 @@
     </div>
   </div>
 </body>  
- <!-- <script src="{% static 'Predicting_app/js/measurementsJS.js' %}"></script>-->
+
+  <script src="{% static 'Predicting_app/js/measurementsJS.js' %}"></script>
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script>
-
-$(document).ready(function(){
-  $(document).ready(function() {
-    $('.collapsible-header').on('click', function() {
-      let icon = $(this).find('i');
-      if (icon.hasClass('fa-chevron-down')) {
-        icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-      } else {
-        icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-      }
-    });
-  });
-    new DataTable('#result-table-1');
-    new DataTable('#result-table-2');
-    new DataTable('#result-table-3');
-});
-
-  </script>
+  
 </html>

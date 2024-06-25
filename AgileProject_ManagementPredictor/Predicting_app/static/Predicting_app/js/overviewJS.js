@@ -1,4 +1,5 @@
 
+
 function initializeChart() {
     // Check if the datatable element exists
     if (document.getElementById('datatable')) {
@@ -63,6 +64,23 @@ function showMeasurements(projectId) {
             new DataTable('#result-table-1');
             new DataTable('#result-table-2');
             new DataTable('#result-table-3');
+            $('.collapsible-header').on('click', function () {
+                var icon = $(this).find('i');
+                if ($(this).attr('aria-expanded') === 'true') {
+                  icon.removeClass('fa-minus').addClass('fa-plus');
+                } else {
+                  icon.removeClass('fa-plus').addClass('fa-minus');
+                }
+              });
+            
+              $('.collapse').on('show.bs.collapse', function () {
+                $(this).prev('.collapsible-header').find('i').removeClass('fa-plus').addClass('fa-minus');
+              });
+            
+              $('.collapse').on('hide.bs.collapse', function () {
+                $(this).prev('.collapsible-header').find('i').removeClass('fa-minus').addClass('fa-plus');
+              });
+            
         })
         .catch(error => console.error('Error fetching measurements:', error));
   }

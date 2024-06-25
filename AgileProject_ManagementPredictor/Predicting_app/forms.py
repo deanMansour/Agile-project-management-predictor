@@ -24,3 +24,5 @@ class User_SignUp_Form(UserCreationForm):
 
 # class UploadCSVForm(forms.Form):
 #     csv_file = forms.FileField(label='Select a CSV file')
+
+
