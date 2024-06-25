@@ -8,7 +8,17 @@
 {% block content %}    
     <section>
         <header>
-            <link href="{% static 'Predicting_app/loginStyle.css' %}" rel="stylesheet">
+            <link href="{% static 'Predicting_app/css/loginStyle.css' %}" rel="stylesheet">
+            <style>body{
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                background: url("{% static 'Predicting_app/images/background.jpg' %}") no-repeat;
+                background-size: cover;
+                background-position: center;
+            }</style>
+
             {% if user.is_authenticated %}
             <span style="color: antiquewhite;" class="logged-in-title">Logged-In account : {{ user.username }}</span>
             {% else %}
@@ -23,7 +33,7 @@
                     {% if user.is_staff == True %}
                         <h1><a href="{% url "admin_MainPage_view_path" %}"> Admin MainPage</a></h1>
                     {% else %}
-                        <h1><a href="{% url "Dashboard" %}"> User MainPage</a></h1>
+                        <h1><a href="{% url "Dashboard_path" %}"> User MainPage</a></h1>
                     {% endif %}
 
                 {% else %}

@@ -1,0 +1,129 @@
+/* Style the dropdown button */
+.dropbtn {
+  background-color: #fff;
+  color: #333;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Dropdown container */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Style the dropdown content */
+.dropdown-content {
+  position: center;
+  background-color: #f9f9f9;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  max-height: 500px;
+  overflow-y: auto;
+  width: 500px;
+  border: 1px solid #ddd;
+}
+
+/* Style the dropdown content when it is shown */
+.dropdown-content.show {
+  display: block;
+}
+
+/* Style the checkboxes */
+.dropdown-content input[type="checkbox"] {
+  margin: 5px;
+}
+
+/* Style the label */
+.dropdown-content label {
+  display: block;
+  margin: 5px 0;
+}
+
+/* Style the button when the dropdown is open */
+.dropdown.open .dropbtn {
+  background-color: #ccc;
+}
+
+/* Ensure the dropdown content is scrollable */
+.scrollable-dropdown {
+  overflow-y: auto;
+  max-height: 150px;
+}
+
+/* Style the form header */
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Style the buttons in the form */
+button {
+  margin: 5px;
+}
+
+/* Style the error messages */
+.messages {
+  color: red;
+}
+
+/* Style the selected project section */
+.selected-project {
+  margin-top: 20px;
+  align-items: center;
+}
+
+/* Style the table */
+.selected-project-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.selected-project-table th,
+.selected-project-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+.selected-project-table th {
+  background-color: #f2f2f2;
+}
+
+/* Style the project switch buttons */
+#previous-project-btn,
+#next-project-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+#previous-project-btn:hover,
+#next-project-btn:hover {
+  background-color: #45a049;
+}
+
+/* Style the unselect/select buttons */
+#unselect-btn,
+#select-projects-btn {
+  display: block;
+  margin: auto; /* Center the buttons horizontally */
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+#unselect-btn:hover,
+#select-projects-btn:hover {
+  background-color: #45a049;
+}
+

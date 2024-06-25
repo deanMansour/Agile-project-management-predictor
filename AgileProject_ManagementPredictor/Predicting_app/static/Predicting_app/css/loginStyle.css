@@ -1,0 +1,158 @@
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" );
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family : "Poppins", sans-serif;
+    
+}
+
+body{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-size: cover;
+    background-position: center;
+    
+}
+.logged-in-title, .logged-out-title {
+    color: antiquewhite;    
+}
+.topcorner{
+    position:absolute;
+    top:0;
+    right:0;
+    }          
+
+.wrapper{
+    width: 420px;
+    background: transparent;
+    border: 2px solid rgba(255,255,255,.2);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 10px rgba(0,0,0,.2);
+    color: #fff;
+    align-items: center; 
+    border-radius: 10px;
+    padding: 30px 40px;
+    position: absolute;
+    top:38.5%;
+    
+  
+    
+}
+.form-control{
+    align-items: center;
+    width: 420px;
+    background: transparent;
+    border: 2px solid rgba(255,255,255,.2);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 10px rgba(0,0,0,.2);
+    color: #fff;
+    border-radius: 10px;
+    padding: 30px 40px;
+    margin: auto;
+    margin-bottom: 10px;
+
+   
+}
+.wrapper h1{
+    font-size: 36px;
+    text-align: center;
+}
+.wrapper .input-box{
+    position: relative;
+    width: 100%;
+    height: 50px;
+    background: rgb(98, 201, 125);
+    margin: 30px 0;
+    border-radius: 40px;
+    
+}
+.input-box input{
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    border: 2px solid rgba(255,255,255, .2);
+    border-radius: 40px;
+}
+
+.input-box input::placeholder{
+    color: #fff;
+}
+
+.input-box i{
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 24px;
+}
+
+.wrapper .forgot_pass{
+    display:flex;
+    justify-content: space-between;
+    font-size: 14.5px;
+    margin: -15px 0 15px;
+
+}
+.forgot_pass a{
+    color: #fff;
+    text-decoration: none;
+}
+
+.wrapper .register{
+    font-size: 14.5px;
+    text-align: center;
+    margin: 20px 0 15px;
+
+}
+
+.register p a{
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+}
+.register p a:hover{
+    text-decoration: underline;
+}
+
+.wrapper .btn-container{
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.wrapper .btn{
+    width: 100%;
+    height: 45px;
+    background: #fff;
+    border: none;
+    outline: none;
+    border-radius: 40px;
+    box-shadow:  0 0 10px rgba(0,0,0,.1);
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+    
+}
+.header h1{
+    color: #fff;
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.header p{
+    color: #fff;
+    font-size: 14.5px;
+    text-align: center;
+}
+
+.header h1 a {
+    color: #fff;
+    text-decoration: none;
+}

@@ -1,6 +1,8 @@
-{% extends "base.html" %} <!-- Extends the base template -->
 
 {% load static %} <!-- Load static files -->
+
+
+
 
 {% block content %} <!-- Define the content block -->
 
@@ -12,9 +14,9 @@
         <!-- Include header.html if needed -->
         <div class="my-3 mx-3"> 
             <div>
-                {% if data.chosen_project %}
+                {% if data.dashboard_project %}
                     <!-- Display selected project name -->
-                    <h2 id="project-name">Selected Project: {{ data.selected_main_project.project_name }}</h2>
+                    <h2 id="project-name">Selected Project: {{ data.dashboard_project.project_name }}</h2>
                     <hr>
                     {% if user.is_staff == True %}
                         <div id="admin-content"></div>
@@ -22,7 +24,9 @@
                     <div id="overview-content">
                         {% include "Predicting_app/overview.html" %}
                     </div>
-                    <div id="measurements-content"></div>
+                    <div id="measurements-content">
+                        {% include "Predicting_app/measurements.html" %}
+                    </div>
                 {% else %}
                     <!-- Display message if no project selected -->
                     <hr>
@@ -36,9 +40,9 @@
             </div>
  
             <!-- Include JavaScript file -->
-            <script src="{% static 'Predicting_app/js/project_details.js' %}"></script>            
         </div>
     </div>      
 </div>
+<script src="{% static 'Predicting_app/js/overviewJS.js' %}"></script> 
 
 {% endblock content %} <!-- End of content block -->

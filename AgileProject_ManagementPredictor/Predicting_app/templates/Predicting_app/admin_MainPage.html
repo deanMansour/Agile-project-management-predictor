@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+<!-- This is the Main Page of the signed-in account,
+If this is Admin then it will show these options: select projects, upload project,
+                                                        delete projects, get project Predict.
+If this is User then it will show these options: select project, get project Predict.
+
+If "get project Predict" button clicked then this page will transition to
+"admin_OR_user_measurementPage".
+-->
+{% block content %}
+    <header>
+        <!-- Error message display -->
+        {% if messages %}
+        <ul class="messages">
+           {% for message in messages %}
+               <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+         {% endif %}
+        Welcome, {{ user.username }}  
+        <form action="" method="POST" enctype="multipart/form-data" id="main-form">
+            {% csrf_token %}
+            <!-- activate views by path name -->            
+            <h1 class="h1_section">
+                {% comment %} <a href="{% url "home_page_view_path" %}"> Home Page</a> {% endcomment %}
+                <a href="{% url "logout_page_view_path" %}"> Log Out</a>
+            </h1>                        
+            <button type="submit" id="View_Dashboard" name="View Dashboard">View Dashboard</button>            
+            
+            <h3 class="h3_section">-----------Admin Files Uploading------------</h3>                
+            <!-- Input field for Uploading project data file(that also accept .csv files) -->                
+            <input type="file" name="file" title="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+            <button type="submit" id="Upload_Project_Data" name="Upload Project Data">Upload Project Data</button>
+            <!--error message if no file chosen-->
+            {% if data.error_message == 2 %}   
+                <ul class="messages">
+                    <li>Please select a file to upload.</li>                    
+                </ul>
+            {% endif %}
+            
+            <h3 class="h3_section">--------------projects selection-----------------</h3> 
+             <!--ADMIN header buttons-->
+            <!--drop list with Checkbox-style interface for selecting projects -->
+            <div class="dropdown">
+                <div class="dropdown-content scrollable-dropdown">
+                    {% if data.selected_excel_projects %}
+                       {% for project in data.selected_excel_projects %}
+                            <label>{{ forloop.counter }}:<input type="checkbox" name="selected-projects" id="selected-projects" value="{{ project.id }}" checked> {{ project.project_name }}</label>
+                       {% endfor %}
+                    {% else %}
+                       {% for project in data.all_projects %}
+                            <label>{{ forloop.counter }}:<input type="checkbox" name="selected-projects" id="selected-projects" value="{{ project.id }}"> {{ project.project_name }}</label> 
+                       {% endfor %}  
+                    {% endif %}                    
+                </div>
+            </div>
+            {% if data.selected_excel_projects %}
+                <button id="unselect-btn" name="Unselect Projects" type="submit">Unselect Projects</button>
+            {% else %}
+                <button id="select-projects-btn" name="Select Projects" type="submit">Select Projects</button>
+            {% endif %}  
+
+            <!--error message if nothing selected-->
+            {% if data.error_message == 1 %}  
+                <ul class="messages">
+                    <li>Please select a projects.</li>                    
+                </ul>
+            {% endif %}
+            <h3 class="h3_section">-----------After projects selection------------</h3> 
+            <!--display only if there is selected projects-->
+            {% if data.selected_excel_projects %}
+                <ul>
+                    <button type="submit" id="Delete_selected_projects_data" name="Delete selected projects data">Delete selected projects data</button>
+                </ul>
+            {% endif %}
+        </form>
+    </header>
+    <h1 class="h1_section">-------------------------------</h1>
+    <h1 class="h1_section">some historic data that selected to measure project predicts</h1>
+    <body>
+        <!--a table that shows the selected projects data
+        that got chosen in the choose field in the header section,
+        with a switch button to switch between the selected projects
+        -->
+        <!-- previous and next project buttons -->
+        <button id="previous-project-btn" onclick="showPreviousProject()">Previous Project</button>
+        <button id="next-project-btn" onclick="showNextProject()">Next Project</button>
+        
+        {% for selected_project in data.selected_excel_projects %}
+        <div class="selected-project" style="display: none;">
+            <!-- Hide project name -->
+            <h2>{{ forloop.counter }}: project name : {{ selected_project.project_name }}</h2>
+            <!-- Table for project data -->
+            <table class="selected-project-table">
+                <thead>
+                    <tr>
+                        <!-- Add a column for row index -->
+                        <th>#</th>
+                        <!-- Iterate over all fields of Excel_Row_Data to display headers -->
+                        {% for field, value in selected_project.excel_rows.first.json_data.items %}
+                            <th>{{ field }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for excel_row_data in selected_project.excel_rows.all %}
+                        <!-- Iterate over each row of Excel_Row_Data -->
+                        <tr>
+                            <!-- Show row index in the first column -->
+                            <td>{{ forloop.counter }}</td>
+                            <!-- Show each field value in a separate column -->
+                            {% for field, value  in excel_row_data.json_data.items %} 
+                                    <td>{{ value }}</td>
+                            {% endfor %}                
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+
+    </body> 
+
+    <!-- JavaScript to handle button clicks and control project visibility -->
+<!-- JavaScript to handle button clicks and control project visibility -->
+<script>
+    var currentProjectIndex = 0;  // Initialize current project index
+
+    function showPreviousProject() {
+        if (currentProjectIndex > 0) {
+            currentProjectIndex--;
+            updateProjectVisibility();
+        }
+    }
+
+    function showNextProject() {
+        if (currentProjectIndex < {{ data.selected_excel_projects|length }} - 1) {
+            currentProjectIndex++;
+            updateProjectVisibility();
+        }
+    }
+
+    function updateProjectVisibility() {
+        var projects = document.getElementsByClassName('selected-project');
+        for (var i = 0; i < projects.length; i++) {
+            projects[i].style.display = 'none';
+        }
+        projects[currentProjectIndex].style.display = 'block';
+    }
+
+    // Initially show the first project
+    updateProjectVisibility();
+
+
+
+    function showPopup(message, messageType) {
+            Swal.fire({
+                icon: messageType,
+                title: 'Message',
+                text: message,
+                timer: 3000, // Time duration the popup is visible
+                showConfirmButton: false // Hide the "OK" button
+            });
+        }
+     
+</script>
+
+
+{% endblock %}
