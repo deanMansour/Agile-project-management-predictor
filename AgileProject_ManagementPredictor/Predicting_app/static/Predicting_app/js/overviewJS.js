@@ -1,17 +1,17 @@
-graph1='bar';
+//Graph type
+graph1 = 'bar';
 
 function initializeChart() {
     // Check if the datatable element exists
     if (document.getElementById('datatable')) {
         console.log('DataTable exists:', document.getElementById('datatable'));
-        
+
         Highcharts.chart('container', {
             data: {
                 table: 'datatable'
             },
             chart: {
                 type: 'column'
-                
             },
             title: {
                 text: 'Distribution of issues in the project'
@@ -32,18 +32,23 @@ function initializeChart() {
     } else {
         console.error('DataTable element not found.');
     }
-  }
+}
 
-  document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     initializeChart();
     new DataTable('#database');
-    
+
+    // Check for forced colors mode
+    if (window.matchMedia && window.matchMedia('(forced-colors: active)').matches) {
+        // Handle forced colors mode
+        console.log('Forced colors mode active');
+    }
 });
 
 
-function change_graph_type(){
-    if(graph1=='bar'){
-        graph1='pie';
+function change_graph_type() {
+    if (graph1 == 'bar') {
+        graph1 = 'pie';
         var table = document.getElementById('datatable');
         var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
         var data = [];
@@ -51,23 +56,24 @@ function change_graph_type(){
         for (var i = 0; i < rows.length; i++) {
             var cells = rows[i].getElementsByTagName('td');
             var type = cells[0].innerText;
-            var open = parseFloat(cells[1].innerText);
+            var open = parseFloat(cells[1].innerText); //issues open
+            var closed = parseFloat(cells[2].innerText); //issues closed
 
-            data.push({ name: type, y: open });
+            data.push({
+                name: type,
+                y: open + closed,
+            });
         }
+        console.log(data);
         Highcharts.chart('container', {
             chart: {
                 type: 'pie'
             },
             title: {
-                text: 'Distribution of issues in the project'
+                text: 'Distribution of open issues in the project'
             },
-            tooltip: {
-                valueSuffix: '%'
-            },
-            subtitle: {
-                text: 'Source: Issue Data'
-            },
+            
+           
             plotOptions: {
                 series: {
                     allowPointSelect: true,
@@ -93,19 +99,22 @@ function change_graph_type(){
                 }
             },
             series: [{
-                name: 'Percentage',
+                name: 'Total issues',
                 colorByPoint: true,
                 data: data
             }]
         });
+    } else {
+        graph1 = 'bar';
+        initializeChart();
     }
-    else{
-        graph1='bar';
-        initializeChart()
-    }
-    
-} 
 
+    // Check for forced colors mode
+    if (window.matchMedia && window.matchMedia('(forced-colors: active)').matches) {
+        // Handle forced colors mode
+        console.log('Forced colors mode active');
+    }
+}
 
 
 function showOverview(projectId) {
@@ -118,10 +127,15 @@ function showOverview(projectId) {
             initializeChart(); // Initialize the chart after loading content
             new DataTable('#database');
 
+            // Check for forced colors mode
+            if (window.matchMedia && window.matchMedia('(forced-colors: active)').matches) {
+                // Handle forced colors mode
+                console.log('Forced colors mode active');
+            }
         })
         .catch(error => console.error('Error fetching overview:', error));
-  }
-  
+}
+
 function showMeasurements(projectId) {
     fetch(`measurements/${projectId}/`)
         .then(response => response.text())
@@ -135,24 +149,29 @@ function showMeasurements(projectId) {
             $('.collapsible-header').on('click', function () {
                 var icon = $(this).find('i');
                 if ($(this).attr('aria-expanded') === 'true') {
-                  icon.removeClass('fa-minus').addClass('fa-plus');
+                    icon.removeClass('fa-minus').addClass('fa-plus');
                 } else {
-                  icon.removeClass('fa-plus').addClass('fa-minus');
+                    icon.removeClass('fa-plus').addClass('fa-minus');
                 }
-              });
-            
-              $('.collapse').on('show.bs.collapse', function () {
+            });
+
+            $('.collapse').on('show.bs.collapse', function () {
                 $(this).prev('.collapsible-header').find('i').removeClass('fa-plus').addClass('fa-minus');
-              });
-            
-              $('.collapse').on('hide.bs.collapse', function () {
+            });
+
+            $('.collapse').on('hide.bs.collapse', function () {
                 $(this).prev('.collapsible-header').find('i').removeClass('fa-minus').addClass('fa-plus');
-              });
-            
+            });
+
+            // Check for forced colors mode
+            if (window.matchMedia && window.matchMedia('(forced-colors: active)').matches) {
+                // Handle forced colors mode
+                console.log('Forced colors mode active');
+            }
         })
         .catch(error => console.error('Error fetching measurements:', error));
-  }
-  
+}
+
 function showAdminEditor() {
     fetch(`AdminEditor/`)
         .then(response => response.text())
@@ -162,5 +181,16 @@ function showAdminEditor() {
             document.getElementById("overview-content").innerHTML = ''; // Clear the overview content
         })
         .catch(error => console.error('Error fetching admin editor:', error));
-  }
-  
+}
+
+function showProfilePage() {
+    fetch(`ProfilePage/`)
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById("profile-content").innerHTML = data;
+            document.getElementById("measurements-content").innerHTML = ''; // Clear the measurements content
+            document.getElementById("overview-content").innerHTML = ''; // Clear the overview content
+            document.getElementById("admin-content").innerHTML = ''; // Clear the overview content
+        })
+        .catch(error => console.error('Error fetching USer profile page:', error));
+}

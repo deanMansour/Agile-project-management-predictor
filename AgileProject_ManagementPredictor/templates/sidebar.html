@@ -58,7 +58,7 @@
                 <strong>{{user.username}}</strong>
             </a>
             <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownMenuLink">
-                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li><a class="dropdown-item" onclick="showProfilePage()">Profile</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="{% url "logout_page_view_path" %}">Sign out</a></li>
             </ul>

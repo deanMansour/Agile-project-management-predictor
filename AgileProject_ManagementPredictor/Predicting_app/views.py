@@ -761,3 +761,12 @@ def measurements_page(request, project_id):
     }
     
     return render(request, 'Predicting_app/measurements.html', {'data': data_to_render, 'user': user_object})
+
+
+
+
+
+def measurements_page(request):
+
+    return render(request, 'Predicting_app/User_profile.html')
+
