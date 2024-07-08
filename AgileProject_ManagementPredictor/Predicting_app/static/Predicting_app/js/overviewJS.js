@@ -137,9 +137,11 @@ function showOverview(projectId) {
 }
 
 function showMeasurements(projectId) {
+    
     fetch(`measurements/${projectId}/`)
         .then(response => response.text())
         .then(data => {
+            console.log('showMeasurements');
             document.getElementById("measurements-content").innerHTML = data;
             document.getElementById("overview-content").innerHTML = ''; // Clear the overview content
             document.getElementById("admin-content").innerHTML = ''; // Clear the admin content

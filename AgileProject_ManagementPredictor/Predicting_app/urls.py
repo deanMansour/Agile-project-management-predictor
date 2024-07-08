@@ -24,6 +24,6 @@ urlpatterns = [
     path('Dashboard/measurements/<int:project_id>/', views.measurements_page, name='measurements_page_view_path'),
 
 
-     path('Dashboard/ProfilePage/', views.measurements_page, name='ProfilePage_page_view_path'),
+    #path('Dashboard/ProfilePage/', views.measurements_page, name='ProfilePage_page_view_path'),
 
 ]

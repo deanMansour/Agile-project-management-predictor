@@ -716,6 +716,7 @@ def overview_page(request, project_id):
     return render(request, 'Predicting_app/overview.html', {'data': data_to_render, 'user': user_object})
 #--------------------------------------------------------------------------------
 def measurements_page(request, project_id):
+    print("IVE GOT TO MEASUREMENRT")
     selected_Projects_instance = Selected_Projects()
     results = {}
     mu_d=v_d=t_d=1/3
@@ -765,8 +766,4 @@ def measurements_page(request, project_id):
 
 
 
-
-def measurements_page(request):
-
-    return render(request, 'Predicting_app/User_profile.html')
 
