@@ -1,22 +1,17 @@
 {% load static %}
 
-
 <head>
     <link href="{% static 'Predicting_app/css/overviewCSS.css' %}" rel="stylesheet">
     <!-- jQuery should be loaded before DataTables -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/data.js"></script>
-<script src="https://code.highcharts.com/highcharts.src.js"></script>
-<script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="https://code.highcharts.com/modules/accessibility.js"></script>
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/data.js"></script>
+    <script src="https://code.highcharts.com/highcharts.src.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 </head>
 
-
 {% if data.dashboard_project %}
-
 <div class="container-fluid">
     <div class="row">
         <!-- First Row: Existing Cards -->
@@ -26,7 +21,7 @@
                     Project Database
                 </div>
                 <div class="card-body" style="max-height: 400px; overflow-y: auto; max-width: 535px;">
-                    <table id="database" class="selected-project-table"  style="min-width: 400px; font-size: 10px;">
+                    <table id="databaseOver" class="selected-project-table"  style="min-width: 400px; font-size: 10px;">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -57,7 +52,7 @@
                 </div>
             </div>
         </div>
-        <!-- Bar chart-->
+
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-body" style="height: 400px;">
@@ -91,14 +86,11 @@
         <!-- Second Row: New Cards -->
         <div class="col-md-6">
             <div class="card mb-4">
-              
                 <div class="card-body" style="max-height: 400px; overflow-y: auto; max-width: 535px;">
-                    
                     <article class="Des_list">
                         <header>
-                          <h1 class="Des_list_title"><span class="Des_list__title--top">DES</span><span class="Des_list_title--bottom">List</span></h1>
+                            <h1 class="Des_list_title"><span class="Des_list__title--top">DES</span><span class="Des_list_title--bottom">List</span></h1>
                         </header>
-                        
                         <main class="Des_list_profiles">
                             <ol class="Des_list__ol">
                                 {% for developer, score in data.des_scores %}
@@ -110,22 +102,37 @@
                                 {% endfor %}
                             </ol>
                         </main>
-                      </div>
+                    </article>
                 </div>
             </div>
         </div>
-
         <div class="col-md-6">
             <div class="card mb-4">
-                <div class="card-header" style="font-size: 1rem; color: darkblue; font-weight: bold;">
-                    New Card 2
-                </div>
                 <div class="card-body">
-                    <!-- Add content for the new card 2 -->
+                    <figure class="highcharts-figure">
+                        <div id="scatter-container"></div>
+                        <table id="datatable2" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Bug density</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for comp, value in data.bugDensity.items %}
+                                <tr>
+                                    <td>{{ comp }}</td>
+                                    <td>{{ value }}</td>
+           
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                    </figure>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 {% endif %}

@@ -1,5 +1,8 @@
 #-------------------------
+from datetime import timedelta
+from itertools import count
 import json
+from time import timezone
 from urllib import request
 from django import template
 from django.views import View
@@ -126,9 +129,9 @@ class Compute_Developer_Expertise_Score:
         if weights:
             self.alpha_dict= weights
         else: self.alpha_dict=[1/3,1/3,1/3]
-
-        
-
+         
+        self.velocity_by_priority={}
+        self.density=self.Bug_density()
         self.measurements_dict()
         self.compute_DES()
 
@@ -371,7 +374,38 @@ class Compute_Developer_Expertise_Score:
     def set_weights(self, weights):
         self.alpha_dict= weights
         self.compute_DES()
+    
+    def get_bug_density(self):
+        return self.bug_density
 
+    #================== more measurements ==============#
+    def Bug_density(self):
+        component_bug_counts = defaultdict(int)
+        component_total_counts = defaultdict(int)
+        
+        all_projects = Excel_File_Data.objects.all()
+        for project in all_projects:
+            excel_rows = project.excel_rows.all()
+            for row in excel_rows:
+                component_name = row.json_data.get("Component/s", "").lower()
+                issue_type = row.json_data.get("Issue Type", "").lower()
+                
+                if component_name:
+                    component_total_counts[component_name] += 1
+                    if issue_type == "bug":
+                        component_bug_counts[component_name] += 1
+        
+        # Calculate the bug density for each component
+        bug_density_dict = {}
+        for component in component_total_counts:
+            if component_total_counts[component] > 0:
+                bug_density_dict[component] = round(component_bug_counts[component] / component_total_counts[component], 2)
+            else:
+                bug_density_dict[component] = 0
+        
+        self.bug_density = bug_density_dict
+        return self.bug_density
+        
     
 
         
@@ -664,7 +698,8 @@ class dashboard(View):
            t_d = float(request.POST.get('number1-3', 0))
         list=[mu_d,v_d,t_d]
         #print(list)
-        
+        bugDensity=DES_scores.get_bug_density()
+
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
         user_object = request.user        
         data_to_render = {
@@ -676,7 +711,8 @@ class dashboard(View):
             'results' : results,
             'issue_data' : issue_data,
             'des_scores' : des_scores,
-            'weights': list
+            'weights': list,
+            'bugDensity': bugDensity,
         }
 
         return render(request, 'Predicting_app/Dashboard.html', {'data': data_to_render, 'user': user_object})
@@ -700,7 +736,16 @@ def overview_page(request, project_id):
     result=DES_scores.get_measurements()
     des_scores = DES_scores.get_DES_scores_dict()
 
-    
+    bugDensity=DES_scores.get_bug_density()
+
+
+    dev_data = {}
+    for developer in result['developer_average_bug_fixing_time']:
+     dev_data[developer] = {
+        'priority': result['priority_weighted_fixed_issues'].get(developer, 0),
+        'fix_time': result['developer_average_bug_fixing_time'][developer],
+    }
+
 
     data_to_render = {
         'display': "Overview Page",
@@ -711,12 +756,12 @@ def overview_page(request, project_id):
         'issue_data': issue_data,
         'results': result,
         'des_scores':des_scores,
+        'bugDensity':bugDensity,
         
     }
     return render(request, 'Predicting_app/overview.html', {'data': data_to_render, 'user': user_object})
 #--------------------------------------------------------------------------------
 def measurements_page(request, project_id):
-    print("IVE GOT TO MEASUREMENRT")
     selected_Projects_instance = Selected_Projects()
     results = {}
     mu_d=v_d=t_d=1/3
@@ -747,6 +792,7 @@ def measurements_page(request, project_id):
         # print(result)
 
     results=DES_scores.get_measurements()
+    bugDensity=DES_scores.get_bug_density()
 
     des_scores=DES_scores.get_DES_scores_dict()
     all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
@@ -759,6 +805,7 @@ def measurements_page(request, project_id):
         'dashboard_project': selected_Projects_instance.get_dashboard_project(),
         'results' : results,
         'des_scores':des_scores,
+        'bugDensity':bugDensity,
     }
     
     return render(request, 'Predicting_app/measurements.html', {'data': data_to_render, 'user': user_object})
