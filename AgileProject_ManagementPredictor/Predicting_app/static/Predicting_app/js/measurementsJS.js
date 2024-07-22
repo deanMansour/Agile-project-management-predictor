@@ -2,6 +2,9 @@
 new DataTable('#result-table-1');
 new DataTable('#result-table-2');
 new DataTable('#result-table-3');
+new DataTable('#result-table-4');
+new DataTable('#result-table-5');
+new DataTable('#result-table-6');
 
 
 

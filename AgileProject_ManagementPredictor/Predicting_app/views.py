@@ -1,5 +1,6 @@
 #-------------------------
 from datetime import timedelta
+import datetime
 from itertools import count
 import json
 from time import timezone
@@ -126,18 +127,24 @@ class Compute_Developer_Expertise_Score:
     def __init__(self, weights=None):
         self._measurements={}
         self._DES_scores_dict={}
+        self.bugs_per_component_dict={}
+        self.issue_resolution_time_results_dict={}
+        self.velocity_by_priority_dict={}
+
         if weights:
             self.alpha_dict= weights
         else: self.alpha_dict=[1/3,1/3,1/3]
          
-        self.velocity_by_priority={}
-        self.density=self.Bug_density()
+        #initializing dictionaries
         self.measurements_dict()
         self.compute_DES()
+        self.bugs_per_component()
+        self.issue_resolution_time()
+        self.velocity_by_priority()
 
         
 
-
+    
     def priority_weighted_fixed_issues(self ):
         priorities_list =self.all_priority_names()
         developers_name_list=self.all_developers_names()
@@ -375,36 +382,149 @@ class Compute_Developer_Expertise_Score:
         self.alpha_dict= weights
         self.compute_DES()
     
-    def get_bug_density(self):
-        return self.bug_density
+    def get_bugs_per_components(self):
+        return self.bugs_per_component_dict
+    
+    def get_resolution_time(self):
+        return self.issue_resolution_time_results_dict
+    
+    def get_velocity_by_priority(self):
+        return self.velocity_by_priority_dict
 
     #================== more measurements ==============#
-    def Bug_density(self):
-        component_bug_counts = defaultdict(int)
-        component_total_counts = defaultdict(int)
-        
+    def bugs_per_component(self):
+        component_bug_counts = {}
+        component_total_counts = defaultdict(lambda: defaultdict(int))
+
         all_projects = Excel_File_Data.objects.all()
         for project in all_projects:
             excel_rows = project.excel_rows.all()
             for row in excel_rows:
                 component_name = row.json_data.get("Component/s", "").lower()
                 issue_type = row.json_data.get("Issue Type", "").lower()
-                
-                if component_name:
-                    component_total_counts[component_name] += 1
-                    if issue_type == "bug":
-                        component_bug_counts[component_name] += 1
+                priority=row.json_data.get("Priority", "").lower()
+                if component_name and issue_type == "bug":
+                    component_total_counts[component_name][priority] += 1
+
+        component_total_counts_regular = {component: dict(priorities) for component, priorities in component_total_counts.items()}
+        self.bugs_per_component_dict = component_total_counts_regular
         
-        # Calculate the bug density for each component
-        bug_density_dict = {}
-        for component in component_total_counts:
-            if component_total_counts[component] > 0:
-                bug_density_dict[component] = round(component_bug_counts[component] / component_total_counts[component], 2)
-            else:
-                bug_density_dict[component] = 0
+    
+
+    ####
+
+
+    def issue_resolution_time(self):
+        all_projects = Excel_File_Data.objects.all()
+        issue_resolution_time_results_dict = {}
+        for project in all_projects:
+            excel_rows = project.excel_rows.all()
+            for row in excel_rows:
+                 issue_type = row.json_data.get("Issue Type", "").lower()
+                 issue_status = row.json_data.get("Status", "").lower()
+                 resolved_date_str = row.json_data.get("Resolved", "")
+                 created_date_str = row.json_data.get("Created", "")
+                 original_estimate_str = row.json_data.get("Original Estimate", "")
+                 issue_key=row.json_data.get("Issue key", "")
+                 priority=row.json_data.get("Priority", "")
+
+                 if issue_status == "resolved" or issue_status=='completed':
+                     if resolved_date_str and created_date_str and original_estimate_str:  # Check if dates are not empty
+                        try:
+                           resolved_date = datetime.datetime.strptime(resolved_date_str, '%d/%m/%Y %H:%M')
+                           created_date = datetime.datetime.strptime(created_date_str, '%d/%m/%Y %H:%M')
+                           time_taken = resolved_date - created_date
+                           time_taken_hours = round(time_taken.total_seconds() / 3600, 2)
+                           # Convert original estimate from seconds to hours
+                           original_estimate_hours = round(float(original_estimate_str) / 3600, 2)
+                           resolution =round(original_estimate_hours - time_taken_hours, 2)
+
+                           issue_resolution_time_results_dict[issue_key] = {'priority':priority,'created':created_date,'resolved':resolved_date,'issue_resolution_time':resolution,'estimated_time':original_estimate_hours}
+                        except ValueError as e:
+                           print(f"Error parsing dates for key {issue_key}: {e}")
+        print('********** length: ',len(issue_resolution_time_results_dict))
+        self.issue_resolution_time_results_dict = issue_resolution_time_results_dict
+
+    ####
+
+    def get_period_start(self,date, start_date):
+       delta = date - start_date
+       period_start = start_date + datetime.timedelta(weeks=(delta.days // 28) * 4)
+       return period_start
+    
+    def collect_data_from_projects(self):
+        data = []
+        all_projects=Excel_File_Data.objects.all()
+        for project in all_projects:
+            excel_rows = project.excel_rows.all()
+            for row in excel_rows:
+                issue_type = row.json_data.get("Issue Type", "").lower()
+                issue_status = row.json_data.get("Status", "").lower()
+                resolved_date_str = row.json_data.get("Resolved", "")
+                created_date_str = row.json_data.get("Created", "")
+                original_estimate_str = row.json_data.get("Original Estimate", "")
+                issue_key = row.json_data.get("Issue key", "")
+                priority = row.json_data.get("Priority", "")
+                project_name=row.json_data.get("Project name", "")
+                if  issue_status == "resolved" or issue_status == "closed":
+                   if resolved_date_str and created_date_str and original_estimate_str:
+                      try:
+                        resolved_date = datetime.datetime.strptime(resolved_date_str, '%d/%m/%Y %H:%M')
+                        created_date = datetime.datetime.strptime(created_date_str, '%d/%m/%Y %H:%M')
+                        time_taken = resolved_date - created_date
+                        time_taken_hours = round(time_taken.total_seconds() / 3600, 2)
+                        original_estimate_hours = round(float(original_estimate_str) / 3600, 2)
+                        resolution = round(original_estimate_hours - time_taken_hours, 2)
+
+                        data.append({
+                            'Project': project_name,
+                            'Issue Key': issue_key,
+                            'Resolved': resolved_date,
+                            'Priority': priority
+                        })
+                      except ValueError as e:
+                        print(f"Error parsing dates for key {issue_key}: {e}")
+
+        return data
+
+    
+    def velocity_by_priority(self):
+            
+            data = self.collect_data_from_projects()
+            # Create DataFrame from data
+            df = pd.DataFrame(data)
+
+            # Convert Resolved date to datetime format
+            df['Resolved'] = pd.to_datetime(df['Resolved'])
+
+            # Calculate the start date of the first period
+            start_date = df['Resolved'].min()
+
+            # Add Period Start column
+            df['Start'] = df['Resolved'].apply(lambda x: self.get_period_start(x, start_date))
+
+            # Add Period End column
+            df['End'] = df['Start'] + pd.Timedelta(weeks=4)
+
+            # Group by Project, Period Start, Period End, and Priority
+            grouped_tasks = df.groupby(['Project', 'Start', 'End', 'Priority']).size().reset_index(name='Completed')
+
+            # Calculate total completed tasks per period per project
+            velocity_by_priority = grouped_tasks.groupby(['Project', 'Start', 'End'])['Completed'].sum().reset_index(name='Total_Completed')
+
+            # Merge results
+            result = pd.merge(grouped_tasks, velocity_by_priority, on=['Project', 'Start', 'End'])
+            result['Velocity'] = result['Completed'] / result['Total_Completed']
+            
+            # Add Period Number column
+            result['Period_Number'] = result.groupby('Project').cumcount() + 1
+            result_dict = result.to_dict(orient='records')
+            # Store the result in a dictionary
+            self.velocity_by_priority_dict = result_dict
+
+
         
-        self.bug_density = bug_density_dict
-        return self.bug_density
+
         
     
 
@@ -656,7 +776,7 @@ class admin_MainPage_view(View):
 #================================================================================
 class dashboard(View):
     selected_Projects_instance = Selected_Projects()
-
+   
     @method_decorator(login_required)
     def get(self, request):
         self.selected_Projects_instance = Selected_Projects()
@@ -667,6 +787,7 @@ class dashboard(View):
             'all_projects': all_excel_projects,
             'selected_Projects_instance':self.selected_Projects_instance,
             'dashboard_project': self.selected_Projects_instance.get_dashboard_project(),
+            'bugs_per_components':DES_scores.get_bugs_per_components(), 
         }
         return render(request, 'Predicting_app/Dashboard.html', {'data': data_to_render, 'user': user_object})
 
@@ -698,7 +819,7 @@ class dashboard(View):
            t_d = float(request.POST.get('number1-3', 0))
         list=[mu_d,v_d,t_d]
         #print(list)
-        bugDensity=DES_scores.get_bug_density()
+        bugs_per_components=DES_scores.get_bugs_per_components()
 
         all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
         user_object = request.user        
@@ -712,7 +833,9 @@ class dashboard(View):
             'issue_data' : issue_data,
             'des_scores' : des_scores,
             'weights': list,
-            'bugDensity': bugDensity,
+            'bugs_per_components': bugs_per_components,
+            'velocity_by_priority':DES_scores.get_velocity_by_priority(),
+            'issue_resolution_data':DES_scores.get_resolution_time(),
         }
 
         return render(request, 'Predicting_app/Dashboard.html', {'data': data_to_render, 'user': user_object})
@@ -736,7 +859,12 @@ def overview_page(request, project_id):
     result=DES_scores.get_measurements()
     des_scores = DES_scores.get_DES_scores_dict()
 
-    bugDensity=DES_scores.get_bug_density()
+    bugs_per_components=DES_scores.get_bugs_per_components()
+    scatter_data = []
+    for component, priorities in bugs_per_components.items():
+        for priority, count in priorities.items():
+            scatter_data.append({'name': component, 'x': priority, 'y': count})
+    
 
 
     dev_data = {}
@@ -756,7 +884,10 @@ def overview_page(request, project_id):
         'issue_data': issue_data,
         'results': result,
         'des_scores':des_scores,
-        'bugDensity':bugDensity,
+        'bugs_per_components':bugs_per_components,
+        'velocity_by_priority':DES_scores.get_velocity_by_priority(),
+        'issue_resolution_data':DES_scores.get_resolution_time(),
+
         
     }
     return render(request, 'Predicting_app/overview.html', {'data': data_to_render, 'user': user_object})
@@ -792,11 +923,13 @@ def measurements_page(request, project_id):
         # print(result)
 
     results=DES_scores.get_measurements()
-    bugDensity=DES_scores.get_bug_density()
-
+    bugs_per_components=DES_scores.get_bugs_per_components()
+    issue_resolution_data=DES_scores.get_resolution_time()
     des_scores=DES_scores.get_DES_scores_dict()
+    velocity_by_priority=DES_scores.get_velocity_by_priority()
     all_excel_projects = Excel_File_Data.objects.all()  # Retrieve all projects excel files        
-    user_object = request.user     
+    user_object = request.user    
+
     data_to_render = {
         'display': "Measurements Page",
         'all_projects': all_excel_projects,
@@ -805,7 +938,9 @@ def measurements_page(request, project_id):
         'dashboard_project': selected_Projects_instance.get_dashboard_project(),
         'results' : results,
         'des_scores':des_scores,
-        'bugDensity':bugDensity,
+        'bugs_per_components':bugs_per_components,
+        'issue_resolution_data':issue_resolution_data,
+        'velocity_by_priority':velocity_by_priority,
     }
     
     return render(request, 'Predicting_app/measurements.html', {'data': data_to_render, 'user': user_object})

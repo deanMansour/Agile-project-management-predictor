@@ -259,6 +259,96 @@
         </tbody>
       </table>
     </div>
+
+    <h3>----------------------------------------------------------------------</h3> 
+    <h4 class="collapsible-header" data-toggle="collapse" href="#issueResolutionTime" role="button" aria-expanded="false" aria-controls="issueResolutionTime">
+      <i class="fas fa-plus"></i> Issue Resolution Time
+    </h4>
+    <div class="collapse" id="issueResolutionTime">
+      <h5>Resolution Time compared to Original Estimate</h5>
+      <table class="result-table" id="result-table-4">
+        <thead>
+          <tr>
+            <th>Issue Key</th>
+            <th>Priority</th>
+            <th>Original Estimate (Hours)</th>
+            <th>Issue Resolution Time (Hours)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for issue_key, issue in data.issue_resolution_data.items %}
+        <tr>
+          <td>{{ issue_key }}</td>
+          <td>{{ issue.priority }}</td>
+          <td>{{ issue.estimated_time }}</td>
+          <td>{{ issue.issue_resolution_time }}</td>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <h3>----------------------------------------------------------------------</h3> 
+
+    <h4 class="collapsible-header" data-toggle="collapse" href="#bugs_per_component" role="button" aria-expanded="false" aria-controls="issueResolutionTime">
+      <i class="fas fa-plus"></i> Bugs per Component
+    </h4>
+    <div class="collapse" id="bugs_per_component">
+      <h5>Bugs per Component</h5>
+      <table class="result-table" id="result-table-5" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>No. of bugs</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for component, number in data.bugs_per_components.items %}
+        <tr>
+          <td>{{ component }}</td>
+          <td>{{ number }}</td>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <h3>----------------------------------------------------------------------</h3> 
+
+    <h4 class="collapsible-header" data-toggle="collapse" href="#velocity_by_priority" role="button" aria-expanded="false" aria-controls="issueResolutionTime">
+      <i class="fas fa-plus"></i> Velocity by priority
+    </h4>
+    <div class="collapse" id="velocity_by_priority">
+      <h5>Proportion of tasks completed within each priority in a given period compared to the total tasks completed in that period for each project</h5>
+   
+      <table class="result-table" id="result-table-6" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Priority</th>
+            <th>Period Number (4 weeks)</th>
+            <th>Period start</th>
+            <th>Period end</th>
+            <th>Completed Tasks</th>
+            <th>Total Completed Tasks</th>
+            <th>Velocity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data.velocity_by_priority %}
+        <tr>
+          <td>{{ row.Project }}</td>
+          <td>{{ row.Priority }}</td>
+          <td>{{ row.Period_Number }}</td>
+          <td>{{ row.Start }}</td>
+          <td>{{ row.End }}</td>
+          <td>{{ row.Completed }}</td>
+          <td>{{ row.Total_Completed }}</td>
+          <td>{{ row.Velocity }}</td>
+          
+          
+           
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </body>  
 

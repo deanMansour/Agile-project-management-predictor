@@ -4,7 +4,6 @@ graph1 = 'bar';
 function initializeChart() {
     // Check if the datatable element exists
     if (document.getElementById('datatable')) {
-        console.log('DataTable exists:', document.getElementById('datatable'));
 
         Highcharts.chart('container', {
             data: {
@@ -37,6 +36,7 @@ function initializeChart() {
 
 
 document.addEventListener('DOMContentLoaded', function () {
+    
     initializeChart();
     new DataTable('#databaseOver');
     initializeScatterChart();
@@ -50,62 +50,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-// function initializeScatterChart() {
-function initializeScatterChart(){
-    var datanew = [];
-    var table = document.getElementById('datatable2');
-    var rows = table.querySelectorAll('tbody tr');
 
-    rows.forEach(function (row) {
-        var component = row.cells[0].textContent.trim();
-        var bugDensity = parseFloat(row.cells[1].textContent);
+   
 
-        if (!isNaN(bugDensity)) {
-            datanew.push([component, bugDensity]);
-        }
-    });
 
-    console.log('Extracted data for scatter chart:', datanew);
-
-    Highcharts.chart('scatter-container', {
-        chart: {
-            type: 'scatter',
-            zoomType: 'xy'
-        },
-        title: {
-            text: 'Bug Density - Bugs per Component'
-        },
-        xAxis: {
-            title: {
-                enabled: true,
-                text: 'Components'
-            },
-            categories: datanew.map(d => d[0]),
-            startOnTick: true,
-            endOnTick: true,
-            showLastLabel: true
-        },
-        yAxis: {
-            title: {
-                text: 'Bug Density'
-            }
-        },
-        tooltip: {
-            headerFormat: '<b>{point.key}</b><br/>',
-            pointFormat: 'Bug Density: {point.y}'
-        },
-        series: [{
-            name: 'Components',
-            color: 'rgba(223, 83, 83, .5)',
-            data: datanew
-        }]
-    });
-}
-    
-
-    
-
-window.onload = initializeScatterChart;
 
 function change_graph_type() {
     if (graph1 == 'bar') {
@@ -125,7 +73,7 @@ function change_graph_type() {
                 y: open + closed,
             });
         }
-        console.log(data);
+ 
         Highcharts.chart('container', {
             chart: {
                 type: 'pie'
@@ -181,23 +129,25 @@ function change_graph_type() {
 
 function showOverview(projectId) {
     fetch(`overview/${projectId}/`)
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById("overview-content").innerHTML = data;
-            document.getElementById("measurements-content").innerHTML = ''; // Clear the measurements content
-            document.getElementById("admin-content").innerHTML = ''; // Clear the admin content
-            initializeChart(); // Initialize the chart after loading content
-            new DataTable('#databaseOver');
-            
-            initializeScatterChart();
+    .then(response => response.text())
+    .then(data => {
+        const overviewContent = document.getElementById("overview-content");
+        if (overviewContent) {
+            overviewContent.innerHTML = data;
 
-            // Check for forced colors mode
-            if (window.matchMedia && window.matchMedia('(forced-colors: active)').matches) {
-                // Handle forced colors mode
-                console.log('Forced colors mode active');
-            }
-        })
-        .catch(error => console.error('Error fetching overview:', error));
+            // Initialize charts after content is set
+            initializeChart();
+            initializeScatterChart();
+        } else {
+            console.error('Overview content element not found.');
+        } 
+        document.getElementById("measurements-content").innerHTML = ''; 
+        document.getElementById("admin-content").innerHTML = ''; 
+        initializeChart();
+        new DataTable('#databaseOver');
+        initializeScatterChart();
+    })
+    .catch(error => console.error('Error fetching overview:', error));
 }
 
 function showMeasurements(projectId) {
@@ -205,14 +155,23 @@ function showMeasurements(projectId) {
     fetch(`measurements/${projectId}/`)
         .then(response => response.text())
         .then(data => {
-            console.log('showMeasurements');
-            document.getElementById("measurements-content").innerHTML = data;
+            const measurementContent = document.getElementById("measurements-content");
+            if (measurementContent) {
+                measurementContent.innerHTML = data;
+                new DataTable('#result-table-1');
+                new DataTable('#result-table-2');
+                new DataTable('#result-table-3');
+                new DataTable('#result-table-4');
+                new DataTable('#result-table-5');
+                new DataTable('#result-table-6');
+               
+            } else {
+                console.error('measurements content element not found.');
+            } 
+       
             document.getElementById("overview-content").innerHTML = ''; // Clear the overview content
             document.getElementById("admin-content").innerHTML = ''; // Clear the admin content
-            new DataTable('#result-table-1');
-            new DataTable('#result-table-2');
-            new DataTable('#result-table-3');
-            new DataTable('#result-table-4');
+            
             $('.collapsible-header').on('click', function () {
                 var icon = $(this).find('i');
                 if ($(this).attr('aria-expanded') === 'true') {
