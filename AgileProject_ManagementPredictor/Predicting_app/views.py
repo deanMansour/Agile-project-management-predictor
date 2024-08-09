@@ -404,7 +404,11 @@ class Compute_Developer_Expertise_Score:
                 issue_type = row.json_data.get("Issue Type", "").lower()
                 priority=row.json_data.get("Priority", "").lower()
                 if component_name and issue_type == "bug":
+                    if(priority=='not prioritized'):
+                        priority='not_prioritized';
+                    component_bug_counts[component_name] = component_bug_counts.get(component_name, 0) + 1
                     component_total_counts[component_name][priority] += 1
+    
 
         component_total_counts_regular = {component: dict(priorities) for component, priorities in component_total_counts.items()}
         self.bugs_per_component_dict = component_total_counts_regular
@@ -447,14 +451,14 @@ class Compute_Developer_Expertise_Score:
 
     ####
 
-    def get_period_start(self,date, start_date):
-       delta = date - start_date
-       period_start = start_date + datetime.timedelta(weeks=(delta.days // 28) * 4)
-       return period_start
+    def get_period_start(self, date, start_date):
+        delta = date - start_date
+        period_start = start_date + datetime.timedelta(weeks=(delta.days // 28) * 4)
+        return period_start
     
     def collect_data_from_projects(self):
         data = []
-        all_projects=Excel_File_Data.objects.all()
+        all_projects = Excel_File_Data.objects.all()
         for project in all_projects:
             excel_rows = project.excel_rows.all()
             for row in excel_rows:
@@ -465,64 +469,59 @@ class Compute_Developer_Expertise_Score:
                 original_estimate_str = row.json_data.get("Original Estimate", "")
                 issue_key = row.json_data.get("Issue key", "")
                 priority = row.json_data.get("Priority", "")
-                project_name=row.json_data.get("Project name", "")
-                if  issue_status == "resolved" or issue_status == "closed":
-                   if resolved_date_str and created_date_str and original_estimate_str:
-                      try:
-                        resolved_date = datetime.datetime.strptime(resolved_date_str, '%d/%m/%Y %H:%M')
-                        created_date = datetime.datetime.strptime(created_date_str, '%d/%m/%Y %H:%M')
-                        time_taken = resolved_date - created_date
-                        time_taken_hours = round(time_taken.total_seconds() / 3600, 2)
-                        original_estimate_hours = round(float(original_estimate_str) / 3600, 2)
-                        resolution = round(original_estimate_hours - time_taken_hours, 2)
-
-                        data.append({
-                            'Project': project_name,
-                            'Issue Key': issue_key,
-                            'Resolved': resolved_date,
-                            'Priority': priority
-                        })
-                      except ValueError as e:
-                        print(f"Error parsing dates for key {issue_key}: {e}")
-
+                project_name = row.json_data.get("Project name", "")
+                if issue_status in ["resolved", "closed"]:
+                    if resolved_date_str and created_date_str and original_estimate_str:
+                        try:
+                            resolved_date = datetime.datetime.strptime(resolved_date_str, '%d/%m/%Y %H:%M')
+                            created_date = datetime.datetime.strptime(created_date_str, '%d/%m/%Y %H:%M')
+                            data.append({
+                                'Project': project_name,
+                                'Issue Key': issue_key,
+                                'Resolved': resolved_date,
+                                'Priority': priority
+                            })
+                        except ValueError as e:
+                            print(f"Error parsing dates for key {issue_key}: {e}")
         return data
 
-    
     def velocity_by_priority(self):
-            
-            data = self.collect_data_from_projects()
-            # Create DataFrame from data
-            df = pd.DataFrame(data)
+        data = self.collect_data_from_projects()
+        # Create DataFrame from data
+        df = pd.DataFrame(data)
+        
+        # Convert Resolved date to datetime format
+        df['Resolved'] = pd.to_datetime(df['Resolved'])
 
-            # Convert Resolved date to datetime format
-            df['Resolved'] = pd.to_datetime(df['Resolved'])
+        # Calculate the start date of the first period
+        start_date = df['Resolved'].min()
 
-            # Calculate the start date of the first period
-            start_date = df['Resolved'].min()
+        # Add Period Start column
+        df['Start'] = df['Resolved'].apply(lambda x: self.get_period_start(x, start_date))
 
-            # Add Period Start column
-            df['Start'] = df['Resolved'].apply(lambda x: self.get_period_start(x, start_date))
+        # Add Period End column
+        df['End'] = df['Start'] + pd.Timedelta(weeks=4)
 
-            # Add Period End column
-            df['End'] = df['Start'] + pd.Timedelta(weeks=4)
+        # Group by Project, Period Start, Period End, and Priority
+        grouped_tasks = df.groupby(['Project', 'Start', 'End', 'Priority']).size().reset_index(name='Completed')
 
-            # Group by Project, Period Start, Period End, and Priority
-            grouped_tasks = df.groupby(['Project', 'Start', 'End', 'Priority']).size().reset_index(name='Completed')
+        # Calculate total completed tasks per period per project
+        velocity_by_priority = grouped_tasks.groupby(['Project', 'Start', 'End'])['Completed'].sum().reset_index(name='Total_Completed')
 
-            # Calculate total completed tasks per period per project
-            velocity_by_priority = grouped_tasks.groupby(['Project', 'Start', 'End'])['Completed'].sum().reset_index(name='Total_Completed')
+        # Merge results
+        result = pd.merge(grouped_tasks, velocity_by_priority, on=['Project', 'Start', 'End'])
+        result['Velocity'] = (result['Completed'] / result['Total_Completed']).round(2)
+        
+        # Add Period Number column
+        result['Period_Number'] = result.groupby(['Project', 'Start']).ngroup() + 1
+          
+        result = result.sort_index(axis=1)
 
-            # Merge results
-            result = pd.merge(grouped_tasks, velocity_by_priority, on=['Project', 'Start', 'End'])
-            result['Velocity'] = result['Completed'] / result['Total_Completed']
-            
-            # Add Period Number column
-            result['Period_Number'] = result.groupby('Project').cumcount() + 1
-            result_dict = result.to_dict(orient='records')
-            # Store the result in a dictionary
-            self.velocity_by_priority_dict = result_dict
-
-
+        # Convert result to dictionary
+        result_dict = result.to_dict(orient='records')
+        
+        # Store the result in a dictionary
+        self.velocity_by_priority_dict = result_dict
         
 
         

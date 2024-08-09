@@ -253,7 +253,7 @@
           {% for developer_name, avg_time in data.results.developer_average_bug_fixing_time.items %}
             <tr>
               <td>{{ developer_name }}</td>
-              <td>{{ avg_time }}</td>
+              <td>{{ avg_time|floatformat:2 }}</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -297,14 +297,26 @@
         <thead>
           <tr>
             <th>Component</th>
-            <th>No. of bugs</th>
+            <th>Blocker</th>
+            <th>Critical</th>
+            <th>High</th>
+            <th>Medium</th>
+            <th>Low</th>
+            <th>Not Prioritized</th>
           </tr>
         </thead>
         <tbody>
           {% for component, number in data.bugs_per_components.items %}
-        <tr>
-          <td>{{ component }}</td>
-          <td>{{ number }}</td>
+          <tr>
+              <td>{{ component }}</td>
+              <td>{{ number.blocker|default:0 }}</td>
+              <td>{{ number.critical|default:0 }}</td>
+              <td>{{ number.high|default:0 }}</td>
+              <td>{{ number.medium|default:0 }}</td>
+              <td>{{ number.low|default:0 }}</td>
+              <td>{{ number.not_prioritized|default:0 }}</td>
+
+          </tr>
           {% endfor %}
         </tbody>
       </table>

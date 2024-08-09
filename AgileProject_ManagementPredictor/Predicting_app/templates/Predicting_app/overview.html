@@ -9,9 +9,12 @@
     <script src="https://code.highcharts.com/highcharts.src.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <script src="https://code.highcharts.com/modules/heatmap.js"></script>
+
 </head>
 
 {% if data.dashboard_project %}
+
 <div class="container-fluid">
     <div class="row">
         <!-- First Row: Existing Cards -->
@@ -88,7 +91,7 @@
     <div class="row mt-4">
         <div class="col-md-6">
             <div class="card mb-4">
-                <div class="card-body" style="max-height: 465px; overflow-y: auto; max-width: 535px;">
+                <div class="card-body" style="max-height: 490px; overflow-y: auto; max-width: 535px;">
                     <article class="Des_list">
                         <header>
                             <h1 class="Des_list_title"><span class="Des_list__title--top">DES</span><span class="Des_list_title--bottom">List</span></h1>
@@ -112,6 +115,7 @@
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-body">
+                    <button onclick="change_resolutionGraph_type()">Change Graph Type</button>
                     <figure class="highcharts-figure">
                         <div id="scatter-container"></div>
                         <table id="datatable2" style="display: none;">
@@ -119,8 +123,6 @@
                                 <tr>
                                     <th>Issue Key</th>
                                     <th>Priority</th>
-                                    <th>Created</th>
-                                    <th>Resolved</th>
                                     <th>Original Estimate (Hours)</th>
                                     <th>Issue Resolution Time (Hours)</th>
                                 </tr>
@@ -130,8 +132,6 @@
                                     <tr>
                                         <td>{{ issue_key }}</td>
                                         <td>{{ issue.priority }}</td>
-                                        <td>{{ issue.created }}</td>
-                                        <td>{{ issue.resolved }}</td>
                                         <td>{{ issue.estimated_time }}</td>
                                         <td>{{ issue.issue_resolution_time }}</td>
                                     </tr>
@@ -148,16 +148,150 @@
     <div class="row mt-4">
         <div class="col-md-6">
             <div class="card mb-4">
+                <style>
+                    /* Ensure high-contrast mode styles do not interfere */
+                    @media (forced-colors: active) {
+                        /* Provide high-contrast mode specific styles if needed */
+                        .highcharts-figure, #container, #scatter-container, #combo-container, #groupBar-container {
+                        background: #000 !important;
+                        color: #fff !important;
+                        }}  
+                    /* Project Name in Card Header */
+                .card-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+
+                .project-name {
+                    font-size: 1.25rem; /* Adjust as needed */
+                    font-weight: bold;
+                    color: darkblue; /* Adjust as needed */
+                }
+
+                /* Navigation button styles */
+                .navigation-container {
+                    display: flex;
+                    align-items: center;
+                }
+
+                .nav-button {
+                    font-size: 24px; /* Adjust size as needed */
+                    cursor: pointer;
+                    position: relative;
+                    padding: 10px;
+                    color: #007bff; /* Adjust color as needed */
+                    transition: color 0.3s, background-color 0.3s;
+                    margin-left: 10px; /* Space between buttons */
+                }
+
+                .nav-button::after {
+                    content: attr(data-text);
+                    position: absolute;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    bottom: -30px; /* Adjust as needed */
+                    background-color: #333; /* Background color for the text box */
+                    color: #fff; /* Text color */
+                    padding: 5px;
+                    border-radius: 3px;
+                    white-space: nowrap;
+                    font-size: 14px; /* Adjust font size as needed */
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: opacity 0.3s, visibility 0.3s;
+                }
+
+                .nav-button:hover::after {
+                    opacity: 1;
+                    visibility: visible;
+                }
+
+                .nav-button:hover {
+                    background-color: #e9ecef; /* Background color on hover */
+                }
+                </style>
+         
+                <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; height: 40px;">
+                    <span class="project-name" id="current-project-name">Project Name</span>
+                    <div class="navigation-container">
+                        <div id="prev-project" class="nav-button" data-text="Previous Project">&lt;</div>
+                        <div id="next-project" class="nav-button" data-text="Next Project">&gt;</div>
+                    </div>
+                </div>
                 <div class="card-body" style="max-height: 465px; overflow-y: auto; max-width: 535px;">
-                    <!-- Add content here for the empty card -->
+                    <figure class="highcharts-figure">
+                        <div id="combo-container"></div>
+
+                        <figure class="highcharts-figure">
+                            <div id="scatter-container"></div>
+                            <table id="datatable3" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Project</th>
+                                        <th>Priority</th>
+                                        <th>Period Number (4 weeks)</th>
+                                        <th>Period start</th>
+                                        <th>Period end</th>
+                                        <th>Completed Tasks</th>
+                                        <th>Total Completed Tasks</th>
+                                        <th>Velocity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in data.velocity_by_priority %}
+                                        <tr>
+                                            <td>{{ row.Project }}</td>
+                                            <td>{{ row.Priority }}</td>
+                                            <td>{{ row.Period_Number }}</td>
+                                            <td>{{ row.Start }}</td>
+                                            <td>{{ row.End }}</td>
+                                            <td>{{ row.Completed }}</td>
+                                            <td>{{ row.Total_Completed }}</td>
+                                            <td>{{ row.Velocity }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </figure>
+                        
+                    </figure>
                 </div>
             </div>
         </div>
         
         <div class="col-md-6">
             <div class="card mb-4">
-                <div class="card-body">
-                    <!-- Add content here for the empty card -->
+                <div class="card-body" style="height:505px;">
+                    <figure class="highcharts-figure">
+                        <div id="groupBar-container"></div>
+                        <table table id="datatable4" style="display: none;">
+                            <thead>
+                                <tr>
+                                  <th>Component</th>
+                                  <th>Blocker</th>
+                                  <th>Critical</th>
+                                  <th>High</th>
+                                  <th>Medium</th>
+                                  <th>Low</th>
+                                  <th>Not Prioritized</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for component, number in data.bugs_per_components.items %}
+                                <tr>
+                                    <td>{{ component }}</td>
+                                    <td>{{ number.blocker|default:0 }}</td>
+                                    <td>{{ number.critical|default:0 }}</td>
+                                    <td>{{ number.high|default:0 }}</td>
+                                    <td>{{ number.medium|default:0 }}</td>
+                                    <td>{{ number.low|default:0 }}</td>
+                                    <td>{{ number.not_prioritized|default:0 }}</td>
+                      
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                          </table>
                 </div>
             </div>
         </div>
